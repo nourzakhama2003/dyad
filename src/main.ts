@@ -249,6 +249,61 @@ declare global {
   const MAIN_WINDOW_VITE_DEV_SERVER_URL: string;
 }
 
+/**
+ * Parse window.open() features string and return normalized dimensions
+ * Features format: "width=800,height=600,left=100,top=100"
+ * Returns defaults for unspecified values
+ */
+function parseWindowFeatures(features: string): {
+  width: number;
+  height: number;
+  left: number;
+  top: number;
+} {
+  const defaults = {
+    width: 800,
+    height: 600,
+    left: 100,
+    top: 100,
+  };
+
+  if (!features || typeof features !== "string") {
+    return defaults;
+  }
+
+  const parsed = {
+    width: defaults.width,
+    height: defaults.height,
+    left: defaults.left,
+    top: defaults.top,
+  };
+
+  // Split by comma and parse each feature
+  // Handles both "width=800,height=600" and "width=800;height=600" formats
+  const featurePairs = features.split(/[,;]/);
+
+  for (const pair of featurePairs) {
+    const [key, value] = pair.trim().split("=");
+    if (!key || !value) continue;
+
+    const numValue = parseInt(value, 10);
+    if (isNaN(numValue)) continue;
+
+    const normalizedKey = key.trim().toLowerCase();
+    if (normalizedKey === "width" && numValue > 0) {
+      parsed.width = Math.min(numValue, 4000); // Cap at reasonable max
+    } else if (normalizedKey === "height" && numValue > 0) {
+      parsed.height = Math.min(numValue, 4000);
+    } else if (normalizedKey === "left") {
+      parsed.left = numValue;
+    } else if (normalizedKey === "top") {
+      parsed.top = numValue;
+    }
+  }
+
+  return parsed;
+}
+
 let mainWindow: BrowserWindow | null = null;
 let pendingForceCloseData: any = null;
 
@@ -357,6 +412,81 @@ const createWindow = () => {
     const menu = Menu.buildFromTemplate(template);
     menu.popup({ window: mainWindow! });
   });
+
+  // Handle window.open() calls from the preview iframe
+  // This ensures popup windows created by user apps also get Dyad's tools injected
+  mainWindow.webContents.setWindowOpenHandler(
+    ({ url, _frameName, features }) => {
+      logger.debug(
+        `[popup-handler] window.open() called with url=${url}, features=${features}`,
+      );
+
+      try {
+        // Parse window features (width, height, left, top, etc.)
+        const featureParams = parseWindowFeatures(features);
+
+        // Resolve the popup URL to ensure it goes through the proxy
+        // If it's a relative URL like "/about", keep it as-is (Electron will resolve relative to current page)
+        // If it's already absolute or a special protocol, use as-is
+        let resolvedUrl = url;
+
+        // For relative URLs, ensure they are absolute by prepending the preview app origin if needed
+        if (
+          url &&
+          !url.startsWith("http") &&
+          !url.startsWith("file") &&
+          url.startsWith("/")
+        ) {
+          // Get the current page's origin from the main window
+          const currentUrl = mainWindow?.webContents?.getURL?.();
+          if (currentUrl) {
+            try {
+              const currentOrigin = new URL(currentUrl).origin;
+              resolvedUrl = new URL(url, currentOrigin).href;
+              logger.debug(
+                `[popup-handler] Resolved relative URL ${url} to ${resolvedUrl}`,
+              );
+            } catch (e) {
+              logger.warn(`[popup-handler] Failed to resolve URL ${url}`, e);
+            }
+          }
+        }
+
+        // Create popup window with specified dimensions
+        const popupWindow = new BrowserWindow({
+          width: featureParams.width,
+          height: featureParams.height,
+          x: featureParams.left,
+          y: featureParams.top,
+          webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            // NO preload - the proxy server handles tool injection
+          },
+          icon: path.join(app.getAppPath(), "assets/icon/logo.png"),
+        });
+
+        // Load the URL through the proxy so tools get injected
+        popupWindow.loadURL(resolvedUrl);
+
+        // Open DevTools in development mode for popups too
+        if (process.env.NODE_ENV === "development") {
+          popupWindow.webContents.openDevTools();
+        }
+
+        logger.debug(
+          `[popup-handler] Created popup window for resolved url=${resolvedUrl}`,
+        );
+
+        // Return 'deny' because we created the window ourselves
+        // If we return 'allow', Electron will create a second default popup window
+        return { action: "deny" };
+      } catch (error) {
+        logger.error(`[popup-handler] Error handling popup:`, error);
+        return { action: "deny" };
+      }
+    },
+  );
 };
 
 /**
