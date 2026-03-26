@@ -416,7 +416,8 @@ const createWindow = () => {
   // Handle window.open() calls from the preview iframe
   // This ensures popup windows created by user apps also get Dyad's tools injected
   mainWindow.webContents.setWindowOpenHandler(
-    ({ url, _frameName, features }) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    ({ url, frameName, features }) => {
       logger.debug(
         `[popup-handler] window.open() called with url=${url}, features=${features}`,
       );
