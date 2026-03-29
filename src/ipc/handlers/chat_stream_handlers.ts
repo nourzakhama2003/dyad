@@ -29,7 +29,7 @@ import {
 } from "../../prompts/supabase_prompt";
 import { getDyadAppPath } from "../../paths/paths";
 import { buildDyadMediaUrl } from "../../lib/dyadMediaUrl";
-import { readSettings } from "../../main/settings";
+import { readSettings, writeSettings } from "../../main/settings";
 import type { ChatResponseEnd, ChatStreamParams } from "@/ipc/types";
 import { DyadError, DyadErrorKind } from "@/errors/dyad_error";
 import {
@@ -559,6 +559,14 @@ ${componentSnippet}
       // This respects the mode persisted to the chat record via selectChat
       const effectiveStreamMode =
         updatedChat.chatMode ?? settings.selectedChatMode;
+
+      // Synchronize settings to the resolved mode before streaming
+      // This ensures the backend streams with the correct mode, and on next settings
+      // refetch, the renderer's mode selector will show the persisted chat mode
+      if (settings.selectedChatMode !== effectiveStreamMode) {
+        writeSettings({ selectedChatMode: effectiveStreamMode });
+      }
+
       // Only Dyad Pro requests have request ids.
       if (settings.enableDyadPro) {
         // Generate requestId early so it can be saved with the message
