@@ -38,6 +38,8 @@ export const ChatSearchResultSchema = z.object({
   title: z.string().nullable(),
   createdAt: z.date(),
   matchedMessageContent: z.string().nullable(),
+  // Persisted chat mode for this specific chat (null = use global setting)
+  chatMode: z.enum(["ask", "build", "local-agent", "plan"]).nullable(),
 });
 
 /**

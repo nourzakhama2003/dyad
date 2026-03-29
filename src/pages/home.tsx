@@ -208,6 +208,7 @@ export default function HomePage() {
         // New app flow (default behavior)
         const result = await ipc.app.createApp({
           name: generateCuteAppName(),
+          ...(effectiveDefaultMode && { initialChatMode: effectiveDefaultMode }),
         });
         chatId = result.chatId;
         appId = result.app.id;

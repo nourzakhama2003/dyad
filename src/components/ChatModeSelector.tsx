@@ -22,9 +22,11 @@ import { toast } from "sonner";
 import { LocalAgentNewChatToast } from "./LocalAgentNewChatToast";
 import { useAtomValue } from "jotai";
 import { chatMessagesByIdAtom } from "@/atoms/chatAtoms";
+import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { Hammer, Bot, MessageCircle, Lightbulb } from "lucide-react";
 import { ipc } from "@/ipc/types";
 import log from "electron-log";
+import { useChats } from "@/hooks/useChats";
 
 const logger = log.scope("ChatModeSelector");
 
@@ -35,6 +37,8 @@ export function ChatModeSelector() {
   const messagesById = useAtomValue(chatMessagesByIdAtom);
   const chatId = routerState.location.search.id as number | undefined;
   const currentChatMessages = chatId ? (messagesById.get(chatId) ?? []) : [];
+  const selectedAppId = useAtomValue(selectedAppIdAtom);
+  const { invalidateChats } = useChats(selectedAppId);
 
   // Migration happens on read, so selectedChatMode will never be "agent"
   const selectedMode = settings?.selectedChatMode || "build";
@@ -54,6 +58,8 @@ export function ChatModeSelector() {
           chatId,
           chatMode: newMode,
         });
+        // Invalidate chats cache so subsequent tab switches use the persisted mode
+        await invalidateChats();
       } catch (error) {
         logger.error("Error saving chat mode to database:", error);
         // Don't show error to user - it's not critical if DB save fails
