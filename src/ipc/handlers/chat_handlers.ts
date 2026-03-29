@@ -53,8 +53,8 @@ export function registerChatHandlers() {
       .values({
         appId,
         initialCommitHash,
-        // Save the chat mode provided during creation (null for backward compatibility)
-        chatMode: initialChatMode || null,
+        // Save the chat mode provided during creation (null/default for backward compatibility)
+        ...(initialChatMode && { chatMode: initialChatMode }),
       })
       .returning();
     logger.info(
