@@ -99,9 +99,9 @@ import { DYAD_MEDIA_DIR_NAME } from "../utils/media_path_utils";
 import { mcpManager } from "../utils/mcp_manager";
 import z from "zod";
 import {
-  isBasicAgentMode,
   isSupabaseConnected,
   isTurboEditsV2Enabled,
+  isDyadProEnabled,
 } from "@/lib/schemas";
 import {
   getFreeAgentQuotaStatus,
@@ -777,7 +777,7 @@ ${componentSnippet}
           chatMode: effectiveStreamMode,
           enableTurboEditsV2: isTurboEditsV2Enabled(settings),
           themePrompt,
-          basicAgentMode: isBasicAgentMode(settings),
+          basicAgentMode: effectiveStreamMode === "local-agent" && !isDyadProEnabled(settings),
         });
 
         // Add information about mentioned apps if any
@@ -1224,7 +1224,7 @@ This conversation includes one or more image attachments. When the user uploads 
           !mentionedAppsCodebases.length
         ) {
           // Check quota for local-agent mode (non-Pro users)
-          const isBasicAgentModeRequest = effectiveStreamMode === "local-agent" && !settings.enableDyadPro;
+          const isBasicAgentModeRequest = effectiveStreamMode === "local-agent" && !isDyadProEnabled(settings);
           if (isBasicAgentModeRequest) {
             const quotaStatus = await getFreeAgentQuotaStatus();
             if (quotaStatus.isQuotaExceeded) {
