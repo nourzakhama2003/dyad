@@ -532,9 +532,9 @@ ${componentSnippet}
         .returning({ id: messages.id });
       const userMessageId = insertedUserMessage.id;
       const settings = readSettings();
-      // Use the chat's persisted mode if set, otherwise use global selectedChatMode
-      // This respects per-chat mode customizations while providing a sensible default
-      const effectiveStreamMode = chat.chatMode ?? settings.selectedChatMode;
+      // Use fresh global selectedChatMode to ensure current session mode (updated synchronously in UI)
+      // Per-chat persistence happens asynchronously and might be stale at stream time
+      const effectiveStreamMode = settings.selectedChatMode;
       // Only Dyad Pro requests have request ids.
       if (settings.enableDyadPro) {
         // Generate requestId early so it can be saved with the message
@@ -1215,8 +1215,8 @@ This conversation includes one or more image attachments. When the user uploads 
           effectiveStreamMode === "local-agent" &&
           !mentionedAppsCodebases.length
         ) {
-          // Check quota for Basic Agent mode (non-Pro users)
-          const isBasicAgentModeRequest = isBasicAgentMode(settings);
+          // Check quota for local-agent mode (non-Pro users)
+          const isBasicAgentModeRequest = effectiveStreamMode === "local-agent" && !settings.enableDyadPro;
           if (isBasicAgentModeRequest) {
             const quotaStatus = await getFreeAgentQuotaStatus();
             if (quotaStatus.isQuotaExceeded) {

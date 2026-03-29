@@ -5,20 +5,21 @@ import { usePostHog } from "posthog-js/react";
 import { ChatModeSchema } from "../lib/schemas";
 import { ipc } from "@/ipc/types";
 import { useRouter } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 
 export function useChatModeToggle() {
   const { settings, updateSettings } = useSettings();
   const posthog = usePostHog();
   const router = useRouter();
-  // Get chatId safely - parse search params only when on /chat route
-  let chatId: { id?: number } | undefined;
-  if (router.state.location.pathname.startsWith("/chat")) {
+  const queryClient = useQueryClient();
+  // Memoize chatId to prevent recreation on every render (which would break useCallback)
+  const chatId = useMemo(() => {
+    if (!router.state.location.pathname.startsWith("/chat")) return undefined;
     const searchParams = new URLSearchParams(router.state.location.search);
     const id = searchParams.get("id");
-    if (id) {
-      chatId = { id: parseInt(id, 10) };
-    }
-  }
+    return id ? { id: parseInt(id, 10) } : undefined;
+  }, [router.state.location.pathname, router.state.location.search]);
 
   // Detect if user is on mac
   const isMac = useIsMac();
@@ -56,6 +57,8 @@ export function useChatModeToggle() {
           chatId: chatId.id,
           chatMode: newMode,
         });
+        // Invalidate chat cache so stale mode isn't restored on tab switch
+        queryClient.invalidateQueries({ queryKey: queryKeys.chats.all });
       } catch (error) {
         console.error("Failed to persist keyboard shortcut mode change:", error);
       }
