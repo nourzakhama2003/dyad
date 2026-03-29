@@ -124,18 +124,31 @@ export function ChatPanel({
       next.set(chatId, chat.messages);
       return next;
     });
-
-    // Synchronize the chat's persisted mode to global settings
-    // This ensures the UI shows the correct mode even for navigation paths
-    // that bypass selectChat (e.g., direct /chat redirects)
-    if (chat.chatMode && settings?.selectedChatMode !== chat.chatMode) {
-      updateSettings({ selectedChatMode: chat.chatMode });
-    }
-  }, [chatId, setMessagesById, settings?.selectedChatMode, updateSettings]);
+  }, [chatId, setMessagesById]);
 
   useEffect(() => {
     fetchChatMessages();
   }, [fetchChatMessages]);
+
+  // Synchronize chat's persisted mode on chat switch (not on every mode change)
+  // This avoids a race condition where mode changes trigger fetchChatMessages
+  // before updateChatMode completes, reading stale DB values
+  useEffect(() => {
+    if (!chatId) {
+      return;
+    }
+
+    const syncChatMode = async () => {
+      const chat = await ipc.chat.getChat(chatId);
+      // Only sync mode if this is the initial load with a persisted mode
+      // Don't sync if user just changed mode (that update is in-flight to backend)
+      if (chat.chatMode && settings?.selectedChatMode !== chat.chatMode) {
+        updateSettings({ selectedChatMode: chat.chatMode });
+      }
+    };
+
+    syncChatMode();
+  }, [chatId]); // Only re-run on chat switch, not on mode changes
 
   const isStreaming = chatId ? (isStreamingById.get(chatId) ?? false) : false;
 
