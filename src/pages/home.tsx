@@ -246,7 +246,7 @@ export default function HomePage() {
       await queryClient.invalidateQueries({ queryKey: queryKeys.chats.all });
       posthog.capture("home:chat-submit", { existingApp: !!selectedApp });
       // Select newly created first chat so it appears first in tabs.
-      selectChat({ chatId, appId, chatMode: effectiveDefaultMode });
+      selectChat({ chatId, appId, chatMode: submissionChatMode });
     } catch (error) {
       console.error("Failed to create chat:", error);
       showError(

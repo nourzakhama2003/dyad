@@ -37,12 +37,6 @@ export function useSelectChat() {
       prefillInput?: string;
       chatMode?: "ask" | "build" | "local-agent" | "plan" | null;
     }) => {
-      // Cancel any previous in-flight updateSettings to prevent stale UI state
-      // when user rapidly switches between chats with different modes
-      if (settingsUpdateAbortRef.current) {
-        settingsUpdateAbortRef.current.abort();
-      }
-
       setSelectedChatId(chatId);
       setSelectedAppId(appId);
       // Track this chat as opened in the current session
