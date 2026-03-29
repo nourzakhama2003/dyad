@@ -557,10 +557,13 @@ ${componentSnippet}
         updatedChat.chatMode ?? settings.selectedChatMode;
 
       // Synchronize settings to the resolved mode before streaming
-      // This ensures the backend streams with the correct mode, and on next settings
-      // refetch, the renderer's mode selector will show the persisted chat mode
+      // This ensures the backend streams with the correct mode
       if (settings.selectedChatMode !== effectiveStreamMode) {
         writeSettings({ selectedChatMode: effectiveStreamMode });
+        // Re-read settings after writeSettings to avoid using stale in-memory values
+        // This is especially important for getModelClient() call below which uses settings.selectedModel
+        const updatedSettings = readSettings();
+        Object.assign(settings, updatedSettings);
       }
 
       // Only Dyad Pro requests have request ids.
