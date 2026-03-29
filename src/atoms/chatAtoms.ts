@@ -15,12 +15,6 @@ export const chatErrorByIdAtom = atom<Map<number, string | null>>(new Map());
 // Atom to hold the currently selected chat ID
 export const selectedChatIdAtom = atom<number | null>(null);
 
-// Atom to hold the active chat mode (synchronized immediately with selectChat)
-// Used to avoid race conditions where streaming starts before async settings mutation completes
-export const activeChatModeAtom = atom<
-  "ask" | "build" | "local-agent" | "plan" | null
->(null);
-
 export const isStreamingByIdAtom = atom<Map<number, boolean>>(new Map());
 export const chatInputValueAtom = atom<string>("");
 export const homeChatInputValueAtom = atom<string>("");

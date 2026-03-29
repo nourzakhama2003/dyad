@@ -3,10 +3,13 @@ import { useSettings } from "./useSettings";
 import { useShortcut } from "./useShortcut";
 import { usePostHog } from "posthog-js/react";
 import { ChatModeSchema } from "../lib/schemas";
+import { ipc } from "@/ipc/types";
+import { useSearch } from "@tanstack/react-router";
 
 export function useChatModeToggle() {
   const { settings, updateSettings } = useSettings();
   const posthog = usePostHog();
+  const chatId = useSearch({ from: "/chat" });
 
   // Detect if user is on mac
   const isMac = useIsMac();
@@ -21,7 +24,7 @@ export function useChatModeToggle() {
   );
 
   // Function to toggle between chat modes
-  const toggleChatMode = useCallback(() => {
+  const toggleChatMode = useCallback(async () => {
     if (!settings || !settings.selectedChatMode) return;
 
     const currentMode = settings.selectedChatMode;
@@ -36,7 +39,19 @@ export function useChatModeToggle() {
       to: newMode,
       trigger: "keyboard_shortcut",
     });
-  }, [settings, updateSettings, posthog]);
+
+    // Persist to chat if we're in a chat
+    if (chatId?.id) {
+      try {
+        await ipc.chat.updateChatMode({
+          chatId: chatId.id,
+          chatMode: newMode,
+        });
+      } catch (error) {
+        console.error("Failed to persist keyboard shortcut mode change:", error);
+      }
+    }
+  }, [settings, updateSettings, posthog, chatId]);
 
   // Add keyboard shortcut with memoized modifiers
   useShortcut(

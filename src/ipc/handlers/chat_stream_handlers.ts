@@ -536,9 +536,9 @@ ${componentSnippet}
         .returning({ id: messages.id });
       const userMessageId = insertedUserMessage.id;
       const settings = readSettings();
-      // Use the chat's per-chat mode if set, otherwise fall back to global selectedChatMode
-      // This prevents race conditions where streaming starts before async mode restoration completes
-      const effectiveStreamMode = chat.chatMode ?? settings.selectedChatMode;
+      // Use the current global setting which is always fresh (updated synchronously in UI)
+      // DB-persisted chat.chatMode is for app restart only, not for current session mode
+      const effectiveStreamMode = settings.selectedChatMode;
       // Only Dyad Pro requests have request ids.
       if (settings.enableDyadPro) {
         // Generate requestId early so it can be saved with the message

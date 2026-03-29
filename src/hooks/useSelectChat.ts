@@ -1,10 +1,10 @@
+import { useRef } from "react";
 import { useSetAtom } from "jotai";
 import {
   selectedChatIdAtom,
   pushRecentViewedChatIdAtom,
   addSessionOpenedChatIdAtom,
   chatInputValueAtom,
-  activeChatModeAtom,
 } from "@/atoms/chatAtoms";
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { useNavigate } from "@tanstack/react-router";
@@ -14,12 +14,12 @@ import log from "electron-log";
 const logger = log.scope("useSelectChat");
 
 export function useSelectChat() {
+  const settingsUpdateAbortRef = useRef<AbortController | null>(null);
   const setSelectedChatId = useSetAtom(selectedChatIdAtom);
   const setSelectedAppId = useSetAtom(selectedAppIdAtom);
   const pushRecentViewedChatId = useSetAtom(pushRecentViewedChatIdAtom);
   const addSessionOpenedChatId = useSetAtom(addSessionOpenedChatIdAtom);
   const setChatInputValue = useSetAtom(chatInputValueAtom);
-  const setActiveChatMode = useSetAtom(activeChatModeAtom);
   const navigate = useNavigate();
   const { updateSettings } = useSettings();
 
@@ -37,10 +37,14 @@ export function useSelectChat() {
       prefillInput?: string;
       chatMode?: "ask" | "build" | "local-agent" | "plan" | null;
     }) => {
+      // Cancel any previous in-flight updateSettings to prevent stale UI state
+      // when user rapidly switches between chats with different modes
+      if (settingsUpdateAbortRef.current) {
+        settingsUpdateAbortRef.current.abort();
+      }
+
       setSelectedChatId(chatId);
       setSelectedAppId(appId);
-      // Set active chat mode synchronously to avoid race conditions with streaming
-      setActiveChatMode(chatMode || null);
       // Track this chat as opened in the current session
       addSessionOpenedChatId(chatId);
       if (!preserveTabOrder) {
@@ -56,9 +60,16 @@ export function useSelectChat() {
       // Restore chat mode async in the background if provided
       // This prevents navigation delays for large chats
       if (chatMode) {
-        updateSettings({ selectedChatMode: chatMode }).catch((error) => {
-          logger.error("Error updating chat mode:", error);
-        });
+        const abortController = new AbortController();
+        settingsUpdateAbortRef.current = abortController;
+        
+        updateSettings({ selectedChatMode: chatMode })
+          .catch((error) => {
+            // Ignore abort errors - just means we switched chats again
+            if (error?.name !== "AbortError") {
+              logger.error("Error updating chat mode:", error);
+            }
+          });
       }
 
       if (prefillInput !== undefined) {
