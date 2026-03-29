@@ -327,7 +327,8 @@ export async function handleLocalAgentStream(
   // Basic Agent mode allows non-Pro users with quota (quota check is done in chat_stream_handlers)
   // Read-only mode (ask mode) is allowed for all users without Pro
   // Use effectiveStreamMode (from per-chat chatMode) instead of global settings to avoid race condition
-  const isBasicAgentMode = effectiveStreamMode === "local-agent";
+  const isBasicAgentMode =
+    effectiveStreamMode === "local-agent" && !isDyadProEnabled(settings);
   if (
     !readOnly &&
     !planModeOnly &&
