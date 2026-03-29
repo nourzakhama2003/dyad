@@ -61,19 +61,17 @@ export function useSelectChat() {
       // Restore chat mode async in the background if provided
       // This prevents navigation delays for large chats
       if (chatMode) {
+        // Store ref so next selectChat call can abort this update if user switches again
         const abortController = new AbortController();
         settingsUpdateAbortRef.current = abortController;
-        // Track which chat this mode update is for, so we ignore stale updates
+        // Track which chat this mode update is for, to ignore stale updates
         currentModeUpdateChatIdRef.current = chatId;
         
         updateSettings({ selectedChatMode: chatMode })
           .catch((error) => {
-            // Only log errors if this is still the current chat
-            if (currentModeUpdateChatIdRef.current === chatId) {
-              // Ignore abort errors - just means we switched chats again
-              if (error?.name !== "AbortError") {
-                logger.error("Error updating chat mode:", error);
-              }
+            // Only log if this update was for the current chat
+            if (currentModeUpdateChatIdRef.current === chatId && error?.name !== "AbortError") {
+              logger.error("Error updating chat mode:", error);
             }
           });
       }

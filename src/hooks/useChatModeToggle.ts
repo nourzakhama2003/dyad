@@ -16,10 +16,10 @@ export function useChatModeToggle() {
   // Memoize chatId to prevent recreation on every render (which would break useCallback)
   const chatId = useMemo(() => {
     if (!router.state.location.pathname.startsWith("/chat")) return undefined;
-    const searchParams = new URLSearchParams(router.state.location.search);
-    const id = searchParams.get("id");
-    return id ? { id: parseInt(id, 10) } : undefined;
+    const id = (router.state.location.search as Record<string, unknown>).id;
+    return typeof id === "number" ? { id } : undefined;
   }, [router.state.location.pathname, router.state.location.search]);
+
 
   // Detect if user is on mac
   const isMac = useIsMac();
