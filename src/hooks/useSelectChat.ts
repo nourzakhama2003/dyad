@@ -63,7 +63,15 @@ export function useSelectChat() {
         const abortController = new AbortController();
         settingsUpdateAbortRef.current = abortController;
         
-        updateSettings({ selectedChatMode: chatMode })
+        const abortPromise = new Promise<never>((_, reject) => {
+          abortController.addEventListener("abort", () => {
+            const error = new Error("Stale chat mode update cancelled");
+            error.name = "AbortError";
+            reject(error);
+          });
+        });
+        
+        Promise.race([updateSettings({ selectedChatMode: chatMode }), abortPromise])
           .catch((error) => {
             // Ignore abort errors - just means we switched chats again
             if (error?.name !== "AbortError") {

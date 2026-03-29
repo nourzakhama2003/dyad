@@ -4,12 +4,21 @@ import { useShortcut } from "./useShortcut";
 import { usePostHog } from "posthog-js/react";
 import { ChatModeSchema } from "../lib/schemas";
 import { ipc } from "@/ipc/types";
-import { useSearch } from "@tanstack/react-router";
+import { useRouter } from "@tanstack/react-router";
 
 export function useChatModeToggle() {
   const { settings, updateSettings } = useSettings();
   const posthog = usePostHog();
-  const chatId = useSearch({ from: "/chat" });
+  const router = useRouter();
+  // Get chatId safely - parse search params only when on /chat route
+  let chatId: { id?: number } | undefined;
+  if (router.state.location.pathname.startsWith("/chat")) {
+    const searchParams = new URLSearchParams(router.state.location.search);
+    const id = searchParams.get("id");
+    if (id) {
+      chatId = { id: parseInt(id, 10) };
+    }
+  }
 
   // Detect if user is on mac
   const isMac = useIsMac();
