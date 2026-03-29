@@ -14,7 +14,6 @@ import log from "electron-log";
 const logger = log.scope("useSelectChat");
 
 export function useSelectChat() {
-  const settingsUpdateAbortRef = useRef<AbortController | null>(null);
   const currentModeUpdateChatIdRef = useRef<number | null>(null);
   const setSelectedChatId = useSetAtom(selectedChatIdAtom);
   const setSelectedAppId = useSetAtom(selectedAppIdAtom);
@@ -61,19 +60,15 @@ export function useSelectChat() {
       // Restore chat mode async in the background if provided
       // This prevents navigation delays for large chats
       if (chatMode) {
-        // Store ref so next selectChat call can abort this update if user switches again
-        const abortController = new AbortController();
-        settingsUpdateAbortRef.current = abortController;
         // Track which chat this mode update is for, to ignore stale updates
         currentModeUpdateChatIdRef.current = chatId;
-        
-        updateSettings({ selectedChatMode: chatMode })
-          .catch((error) => {
-            // Only log if this update was for the current chat
-            if (currentModeUpdateChatIdRef.current === chatId && error?.name !== "AbortError") {
-              logger.error("Error updating chat mode:", error);
-            }
-          });
+
+        updateSettings({ selectedChatMode: chatMode }).catch((error) => {
+          // Only log if this update was for the current chat
+          if (currentModeUpdateChatIdRef.current === chatId) {
+            logger.error("Error updating chat mode:", error);
+          }
+        });
       }
 
       if (prefillInput !== undefined) {
