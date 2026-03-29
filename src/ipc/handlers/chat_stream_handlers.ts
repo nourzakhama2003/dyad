@@ -532,31 +532,8 @@ ${componentSnippet}
         .returning({ id: messages.id });
       const userMessageId = insertedUserMessage.id;
       const settings = readSettings();
-      // Use fresh global selectedChatMode to ensure current session mode (updated synchronously in UI)
-      // Per-chat persistence happens asynchronously and might be stale at stream time
-      const effectiveStreamMode = settings.selectedChatMode;
-      // Only Dyad Pro requests have request ids.
-      if (settings.enableDyadPro) {
-        // Generate requestId early so it can be saved with the message
-        dyadRequestId = uuidv4();
-      }
 
-      // Add a placeholder assistant message immediately
-      const [placeholderAssistantMessage] = await db
-        .insert(messages)
-        .values({
-          chatId: req.chatId,
-          role: "assistant",
-          content: "", // Start with empty content
-          requestId: dyadRequestId,
-          model: settings.selectedModel.name,
-          sourceCommitHash: await getCurrentCommitHash({
-            path: getDyadAppPath(chat.app.path),
-          }),
-        })
-        .returning();
-
-      // Fetch updated chat data after possible deletions and additions
+      // Fetch updated chat data to get fresh per-chat mode setting
       const updatedChat = await db.query.chats.findFirst({
         where: eq(chats.id, req.chatId),
         with: {
@@ -573,6 +550,31 @@ ${componentSnippet}
           DyadErrorKind.NotFound,
         );
       }
+
+      // Use per-chat mode if set, otherwise fall back to current global setting
+      // This respects the mode persisted to the chat record via selectChat
+      const effectiveStreamMode =
+        updatedChat.chatMode ?? settings.selectedChatMode;
+      // Only Dyad Pro requests have request ids.
+      if (settings.enableDyadPro) {
+        // Generate requestId early so it can be saved with the message
+        dyadRequestId = uuidv4();
+      }
+
+      // Add a placeholder assistant message immediately
+      const [placeholderAssistantMessage] = await db
+        .insert(messages)
+        .values({
+          chatId: req.chatId,
+          role: "assistant",
+          content: "", // Start with empty content
+          requestId: dyadRequestId,
+          model: settings.selectedModel.name,
+          sourceCommitHash: await getCurrentCommitHash({
+            path: getDyadAppPath(updatedChat.app.path),
+          }),
+        })
+        .returning();
 
       // Send the messages right away so that the loading state is shown for the message.
       safeSend(event.sender, "chat:response:chunk", {

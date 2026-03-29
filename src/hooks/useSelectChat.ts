@@ -14,7 +14,7 @@ import log from "electron-log";
 const logger = log.scope("useSelectChat");
 
 export function useSelectChat() {
-  const currentModeUpdateChatIdRef = useRef<number | null>(null);
+  const currentModeUpdateVersionRef = useRef<number>(0);
   const setSelectedChatId = useSetAtom(selectedChatIdAtom);
   const setSelectedAppId = useSetAtom(selectedAppIdAtom);
   const pushRecentViewedChatId = useSetAtom(pushRecentViewedChatIdAtom);
@@ -37,6 +37,9 @@ export function useSelectChat() {
       prefillInput?: string;
       chatMode?: "ask" | "build" | "local-agent" | "plan" | null;
     }) => {
+      // Increment version to invalidate any in-flight mode updates from previous chat selections
+      // This prevents stale updateSettings calls from overwriting fresh ones when tabs are switched rapidly
+      const updateVersion = ++currentModeUpdateVersionRef.current;
       setSelectedChatId(chatId);
       setSelectedAppId(appId);
       // Track this chat as opened in the current session
@@ -52,14 +55,11 @@ export function useSelectChat() {
       });
 
       // Restore chat mode async in the background if provided
-      // This prevents navigation delays for large chats
       if (chatMode) {
-        // Track which chat this mode update is for, to ignore stale updates
-        currentModeUpdateChatIdRef.current = chatId;
-
+        //  apply mode update if this is still the current selection (version matches)
         updateSettings({ selectedChatMode: chatMode }).catch((error) => {
-          // Only log if this update was for the current chat
-          if (currentModeUpdateChatIdRef.current === chatId) {
+          //  if this update was for the current selection version log the error, otherwise ignore since it's stale
+          if (updateVersion === currentModeUpdateVersionRef.current) {
             logger.error("Error updating chat mode:", error);
           }
         });
