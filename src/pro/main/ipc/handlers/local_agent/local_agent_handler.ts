@@ -18,7 +18,7 @@ import { db } from "@/db";
 import { chats, messages } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-import { isDyadProEnabled, isBasicAgentMode } from "@/lib/schemas";
+import { isDyadProEnabled } from "@/lib/schemas";
 import { readSettings } from "@/main/settings";
 import { getDyadAppPath } from "@/paths/paths";
 import { getModelClient } from "@/ipc/utils/get_model_client";
@@ -266,6 +266,7 @@ export async function handleLocalAgentStream(
     readOnly = false,
     planModeOnly = false,
     messageOverride,
+    effectiveStreamMode,
   }: {
     placeholderMessageId: number;
     systemPrompt: string;
@@ -285,6 +286,12 @@ export async function handleLocalAgentStream(
      * Used for summarization where messages need to be transformed.
      */
     messageOverride?: ModelMessage[];
+    /**
+     * The effective stream mode (from per-chat chatMode or global settings).
+     * Used to determine if basic agent mode quota checks apply.
+     * Must be passed from the caller to avoid race conditions with async mode updates.
+     */
+    effectiveStreamMode: "ask" | "build" | "local-agent" | "plan";
   },
 ): Promise<boolean> {
   const settings = readSettings();
@@ -319,11 +326,13 @@ export async function handleLocalAgentStream(
   // Check Pro status or Basic Agent mode
   // Basic Agent mode allows non-Pro users with quota (quota check is done in chat_stream_handlers)
   // Read-only mode (ask mode) is allowed for all users without Pro
+  // Use effectiveStreamMode (from per-chat chatMode) instead of global settings to avoid race condition
+  const isBasicAgentMode = effectiveStreamMode === "local-agent";
   if (
     !readOnly &&
     !planModeOnly &&
     !isDyadProEnabled(settings) &&
-    !isBasicAgentMode(settings)
+    !isBasicAgentMode
   ) {
     safeSend(event.sender, "chat:response:error", {
       chatId: req.chatId,
@@ -568,7 +577,7 @@ export async function handleLocalAgentStream(
     const agentTools = buildAgentToolSet(ctx, {
       readOnly,
       planModeOnly,
-      basicAgentMode: !readOnly && !planModeOnly && isBasicAgentMode(settings),
+      basicAgentMode: !readOnly && !planModeOnly && isBasicAgentMode,
     });
     const mcpTools =
       readOnly || planModeOnly ? {} : await getMcpTools(event, ctx);
