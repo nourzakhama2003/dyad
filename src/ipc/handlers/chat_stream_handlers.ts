@@ -532,6 +532,9 @@ ${componentSnippet}
         .returning({ id: messages.id });
       const userMessageId = insertedUserMessage.id;
       const settings = readSettings();
+      // Use the chat's per-chat mode if set, otherwise fall back to global selectedChatMode
+      // This prevents race conditions where streaming starts before async mode restoration completes
+      const effectiveStreamMode = chat.chatMode ?? settings.selectedChatMode;
       // Only Dyad Pro requests have request ids.
       if (settings.enableDyadPro) {
         // Generate requestId early so it can be saved with the message
@@ -648,8 +651,8 @@ ${componentSnippet}
           updatedChat.app.id, // Exclude current app
         );
         const willUseLocalAgentStream =
-          (settings.selectedChatMode === "local-agent" ||
-            settings.selectedChatMode === "ask") &&
+          (effectiveStreamMode === "local-agent" ||
+            effectiveStreamMode === "ask") &&
           !mentionedAppsCodebases.length;
 
         const isDeepContextEnabled =
@@ -763,7 +766,7 @@ ${componentSnippet}
         // Migration on read converts "agent" to "build", so no need to check for it here
         let systemPrompt = constructSystemPrompt({
           aiRules,
-          chatMode: settings.selectedChatMode,
+          chatMode: effectiveStreamMode,
           enableTurboEditsV2: isTurboEditsV2Enabled(settings),
           themePrompt,
           basicAgentMode: isBasicAgentMode(settings),
@@ -813,7 +816,7 @@ ${componentSnippet}
             getSupabaseAvailableSystemPrompt(supabaseClientCode) +
             "\n\n" +
             // For local agent, we will explicitly fetch the database context when needed.
-            (settings.selectedChatMode === "local-agent"
+            (effectiveStreamMode === "local-agent"
               ? ""
               : await getSupabaseContext({
                   supabaseProjectId: updatedChat.app.supabaseProjectId,
@@ -824,7 +827,7 @@ ${componentSnippet}
           // Neon projects don't need Supabase.
           !updatedChat.app?.neonProjectId &&
           // In local agent mode, we will suggest supabase as part of the add-integration tool
-          settings.selectedChatMode !== "local-agent" &&
+          effectiveStreamMode !== "local-agent" &&
           // If in security review mode, we don't need to mention supabase is available.
           !isSecurityReviewIntent
         ) {
@@ -854,7 +857,7 @@ ${componentSnippet}
         // print out the dyad-write tags.
         // Usually, AI models will want to use the image as reference to generate code (e.g. UI mockups) anyways, so
         // it's not that critical to include the image analysis instructions.
-        const isAskMode = settings.selectedChatMode === "ask";
+        const isAskMode = effectiveStreamMode === "ask";
         if (hasUploadedAttachments) {
           if (willUseLocalAgentStream && !isAskMode) {
             systemPrompt += `
@@ -927,7 +930,7 @@ This conversation includes one or more image attachments. When the user uploads 
           // Thinking tags are generally not critical for the context
           // and eats up extra tokens.
           content:
-            settings.selectedChatMode === "ask"
+            effectiveStreamMode === "ask"
               ? removeDyadTags(removeNonEssentialTags(msg.content))
               : removeNonEssentialTags(msg.content),
           providerOptions: {
@@ -1145,10 +1148,7 @@ This conversation includes one or more image attachments. When the user uploads 
         // Handle ask mode: use local-agent in read-only mode
         // This gives users access to code reading tools while in ask mode
         // Ask mode does not consume free agent quota
-        if (
-          settings.selectedChatMode === "ask" &&
-          !mentionedAppsCodebases.length
-        ) {
+        if (effectiveStreamMode === "ask" && !mentionedAppsCodebases.length) {
           // Reconstruct system prompt for local-agent read-only mode
           const readOnlySystemPrompt = constructSystemPrompt({
             aiRules,
@@ -1189,10 +1189,7 @@ This conversation includes one or more image attachments. When the user uploads 
 
         // Handle plan mode: use local-agent with plan tools only
         // Plan mode is for requirements gathering and creating implementation plans
-        if (
-          settings.selectedChatMode === "plan" &&
-          !mentionedAppsCodebases.length
-        ) {
+        if (effectiveStreamMode === "plan" && !mentionedAppsCodebases.length) {
           // Reconstruct system prompt for plan mode
           const planModeSystemPrompt = constructSystemPrompt({
             aiRules,
@@ -1215,7 +1212,7 @@ This conversation includes one or more image attachments. When the user uploads 
         // Mentioned apps can't be handled by the local agent (defer to balanced smart context
         // in build mode)
         if (
-          settings.selectedChatMode === "local-agent" &&
+          effectiveStreamMode === "local-agent" &&
           !mentionedAppsCodebases.length
         ) {
           // Check quota for Basic Agent mode (non-Pro users)
@@ -1269,7 +1266,7 @@ This conversation includes one or more image attachments. When the user uploads 
         // 2. Mode is "build" AND there are enabled MCP servers
         if (
           settings.enableMcpServersForBuildMode &&
-          settings.selectedChatMode === "build"
+          effectiveStreamMode === "build"
         ) {
           const tools = await getMcpTools(event);
           const hasEnabledMcpServers = Object.keys(tools).length > 0;
@@ -1337,7 +1334,7 @@ This conversation includes one or more image attachments. When the user uploads 
           fullResponse = result.fullResponse;
 
           if (
-            settings.selectedChatMode !== "ask" &&
+            effectiveStreamMode !== "ask" &&
             isTurboEditsV2Enabled(settings)
           ) {
             let issues = await dryRunSearchReplace({
@@ -1438,7 +1435,7 @@ ${formattedSearchReplaceIssues}`,
 
           if (
             !abortController.signal.aborted &&
-            settings.selectedChatMode !== "ask" &&
+            effectiveStreamMode !== "ask" &&
             hasUnclosedDyadWrite(fullResponse)
           ) {
             let continuationAttempts = 0;
@@ -1492,7 +1489,7 @@ ${formattedSearchReplaceIssues}`,
             // installed yet.
             addDependencies.length === 0 &&
             settings.enableAutoFixProblems &&
-            settings.selectedChatMode !== "ask"
+            effectiveStreamMode !== "ask"
           ) {
             try {
               // IF auto-fix is enabled
@@ -1662,10 +1659,7 @@ ${problemReport.problems
           .set({ content: fullResponse })
           .where(eq(messages.id, placeholderAssistantMessage.id));
         const settings = readSettings();
-        if (
-          settings.autoApproveChanges &&
-          settings.selectedChatMode !== "ask"
-        ) {
+        if (settings.autoApproveChanges && effectiveStreamMode !== "ask") {
           const status = await processFullResponseActions(
             fullResponse,
             req.chatId,

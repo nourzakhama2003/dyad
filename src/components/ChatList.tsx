@@ -125,7 +125,9 @@ export function ChatList({ show }: { show?: boolean }) {
         // Create a new chat with the initial mode persisted to the database
         const chatId = await ipc.chat.createChat({
           appId: selectedAppId,
-          ...(effectiveDefaultMode && { initialChatMode: effectiveDefaultMode }),
+          ...(effectiveDefaultMode && {
+            initialChatMode: effectiveDefaultMode,
+          }),
         });
 
         // Refresh the chat list first so the new chat is in the cache
@@ -133,7 +135,11 @@ export function ChatList({ show }: { show?: boolean }) {
         await invalidateChats();
 
         // Navigate to the new chat (use selectChat so it appears at front of tab bar)
-        selectChat({ chatId, appId: selectedAppId, chatMode: effectiveDefaultMode });
+        selectChat({
+          chatId,
+          appId: selectedAppId,
+          chatMode: effectiveDefaultMode,
+        });
       } catch (error) {
         // DO A TOAST
         showError(t("failedCreateChat", { error: (error as any).toString() }));

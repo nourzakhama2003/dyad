@@ -187,7 +187,12 @@ export default function HomePage() {
 
       // Only determine mode if we have complete information
       // If quota or settings are still loading, let server use defaults
-      let effectiveDefaultMode: undefined | "ask" | "build" | "local-agent" | "plan";
+      let effectiveDefaultMode:
+        | undefined
+        | "ask"
+        | "build"
+        | "local-agent"
+        | "plan";
       if (!isQuotaLoading && settings) {
         const freeAgentQuotaAvailable = !isQuotaExceeded;
         effectiveDefaultMode = getEffectiveDefaultChatMode(
@@ -201,14 +206,18 @@ export default function HomePage() {
         // Existing app flow: create a new chat in the selected app with initial mode
         chatId = await ipc.chat.createChat({
           appId: selectedApp.id,
-          ...(effectiveDefaultMode && { initialChatMode: effectiveDefaultMode }),
+          ...(effectiveDefaultMode && {
+            initialChatMode: effectiveDefaultMode,
+          }),
         });
         appId = selectedApp.id;
       } else {
         // New app flow (default behavior)
         const result = await ipc.app.createApp({
           name: generateCuteAppName(),
-          ...(effectiveDefaultMode && { initialChatMode: effectiveDefaultMode }),
+          ...(effectiveDefaultMode && {
+            initialChatMode: effectiveDefaultMode,
+          }),
         });
         chatId = result.chatId;
         appId = result.app.id;

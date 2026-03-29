@@ -38,7 +38,10 @@ export const ChatSchema = z.object({
   messages: z.array(MessageSchema),
   initialCommitHash: z.string().nullable().optional(),
   dbTimestamp: z.string().nullable().optional(),
-  chatMode: z.enum(["ask", "build", "local-agent", "plan"]).nullable().optional(),
+  chatMode: z
+    .enum(["ask", "build", "local-agent", "plan"])
+    .nullable()
+    .optional(),
 });
 
 export type Chat = z.infer<typeof ChatSchema>;
@@ -207,7 +210,9 @@ export const chatContracts = {
         appId: z.number(),
         // Initial chat mode to persist for this new chat
         // Falls back to global default if not specified
-        initialChatMode: z.enum(["ask", "build", "local-agent", "plan"]).optional(),
+        initialChatMode: z
+          .enum(["ask", "build", "local-agent", "plan"])
+          .optional(),
       }),
     ]),
     output: CreateChatResultSchema,
@@ -253,6 +258,7 @@ export const chatContracts = {
         title: z.string().nullable(),
         createdAt: z.date(),
         matchedMessageContent: z.string().nullable(),
+        chatMode: z.enum(["ask", "build", "local-agent", "plan"]).nullable(),
       }),
     ),
   }),

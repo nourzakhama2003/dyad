@@ -96,7 +96,12 @@ export function ChatHeader({
       try {
         // Only set initial mode if we have complete information
         // If quota is loading, don't assume availability - let server-side default be used
-        let initialChatMode: undefined | "ask" | "build" | "local-agent" | "plan";
+        let initialChatMode:
+          | undefined
+          | "ask"
+          | "build"
+          | "local-agent"
+          | "plan";
         if (!quotaLoading && settings) {
           const freeAgentQuotaAvailable = !isQuotaExceeded;
           initialChatMode = getEffectiveDefaultChatMode(
