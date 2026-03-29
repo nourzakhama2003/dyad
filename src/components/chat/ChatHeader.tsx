@@ -95,7 +95,6 @@ export function ChatHeader({
     if (appId) {
       try {
         // Only set initial mode if we have complete information
-        // If quota is loading, don't assume availability - let server-side default be used
         let initialChatMode:
           | undefined
           | "ask"
@@ -110,8 +109,7 @@ export function ChatHeader({
             freeAgentQuotaAvailable,
           );
         }
-        // If quotaLoading is true or settings not loaded, initialChatMode stays undefined
-        // (server will use global default)
+        // If quotaLoading is true or settings not loaded, initialChatMode stays undefined(server will use global default)
 
         const chatId = await ipc.chat.createChat({
           appId,

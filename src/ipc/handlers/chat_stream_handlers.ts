@@ -1224,6 +1224,7 @@ This conversation includes one or more image attachments. When the user uploads 
             dyadRequestId: dyadRequestId ?? "[no-request-id]",
             planModeOnly: true,
             messageOverride: isSummarizeIntent ? chatMessages : undefined,
+            effectiveStreamMode,
           });
           return;
         }
@@ -1271,6 +1272,7 @@ This conversation includes one or more image attachments. When the user uploads 
                 systemPrompt,
                 dyadRequestId: dyadRequestId ?? "[no-request-id]",
                 messageOverride: isSummarizeIntent ? chatMessages : undefined,
+                effectiveStreamMode,
               },
             );
           } finally {

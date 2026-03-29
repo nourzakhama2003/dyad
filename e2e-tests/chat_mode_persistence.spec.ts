@@ -20,8 +20,7 @@ test("chat mode persists when switching between chats", async ({ po }) => {
   modeText = await po.chatActions.getChatMode();
   expect(modeText).toContain("Plan");
 
-  // Switch back to Chat 1 using tab
-  // Most recent chat is chat 2 (active), so we click the other tab
+  // Switch back to Chat 1 using tab8
   const allTabs = po.page.locator("div[draggable]");
   const tabCount = await allTabs.count();
 
@@ -41,6 +40,5 @@ test("chat mode persists when switching between chats", async ({ po }) => {
   await inactiveTabs[0].locator("button").first().click();
 
   // Wait for the chat mode to update and verify Chat 1 is still in "Ask" mode
-  // Use polling instead of fixed timeout for deterministic test behavior
   await expect.poll(async () => po.chatActions.getChatMode()).toContain("Ask");
 });
