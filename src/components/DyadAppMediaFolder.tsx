@@ -106,17 +106,20 @@ export function DyadAppMediaFolder({
   const handleStartNewChatWithImage = async (file: MediaFile) => {
     setIsStartingChat(true);
     try {
-      // Calculate effective default mode
-      const freeAgentQuotaAvailable = !quotaLoading && !isQuotaExceeded;
-      const effectiveDefaultMode = getEffectiveDefaultChatMode(
-        settings!,
-        envVars,
-        freeAgentQuotaAvailable,
-      );
+      // Calculate effective default mode (only if settings are loaded)
+      let effectiveDefaultMode: undefined | "ask" | "build" | "local-agent" | "plan";
+      if (settings) {
+        const freeAgentQuotaAvailable = !quotaLoading && !isQuotaExceeded;
+        effectiveDefaultMode = getEffectiveDefaultChatMode(
+          settings,
+          envVars,
+          freeAgentQuotaAvailable,
+        );
+      }
 
       const chatId = await ipc.chat.createChat({
         appId: file.appId,
-        initialChatMode: effectiveDefaultMode,
+        ...(effectiveDefaultMode && { initialChatMode: effectiveDefaultMode }),
       });
       await queryClient.invalidateQueries({ queryKey: queryKeys.chats.all });
       selectChat({

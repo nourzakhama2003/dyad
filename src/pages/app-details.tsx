@@ -233,17 +233,19 @@ export default function AppDetailsPage() {
       setSelectedAppId(appId);
       await invalidateAppQuery(queryClient, { appId });
       await refreshApps();
-      // Create initial chat with effective default mode
-      const freeAgentQuotaAvailable =
-        !quotaLoading && !isQuotaExceeded;
-      const effectiveDefaultMode = getEffectiveDefaultChatMode(
-        settings!,
-        envVars,
-        freeAgentQuotaAvailable,
-      );
+      // Create initial chat with effective default mode (only if quota and settings are loaded)
+      let effectiveDefaultMode: undefined | "ask" | "build" | "local-agent" | "plan";
+      if (!quotaLoading && settings) {
+        const freeAgentQuotaAvailable = !isQuotaExceeded;
+        effectiveDefaultMode = getEffectiveDefaultChatMode(
+          settings,
+          envVars,
+          freeAgentQuotaAvailable,
+        );
+      }
       await ipc.chat.createChat({
         appId,
-        initialChatMode: effectiveDefaultMode,
+        ...(effectiveDefaultMode && { initialChatMode: effectiveDefaultMode }),
       });
       setIsCopyDialogOpen(false);
       navigate({ to: "/app-details", search: { appId } });
