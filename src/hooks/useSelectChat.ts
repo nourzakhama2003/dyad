@@ -4,6 +4,7 @@ import {
   pushRecentViewedChatIdAtom,
   addSessionOpenedChatIdAtom,
   chatInputValueAtom,
+  activeChatModeAtom,
 } from "@/atoms/chatAtoms";
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { useNavigate } from "@tanstack/react-router";
@@ -18,6 +19,7 @@ export function useSelectChat() {
   const pushRecentViewedChatId = useSetAtom(pushRecentViewedChatIdAtom);
   const addSessionOpenedChatId = useSetAtom(addSessionOpenedChatIdAtom);
   const setChatInputValue = useSetAtom(chatInputValueAtom);
+  const setActiveChatMode = useSetAtom(activeChatModeAtom);
   const navigate = useNavigate();
   const { updateSettings } = useSettings();
 
@@ -37,6 +39,8 @@ export function useSelectChat() {
     }) => {
       setSelectedChatId(chatId);
       setSelectedAppId(appId);
+      // Set active chat mode synchronously to avoid race conditions with streaming
+      setActiveChatMode(chatMode || null);
       // Track this chat as opened in the current session
       addSessionOpenedChatId(chatId);
       if (!preserveTabOrder) {

@@ -122,7 +122,7 @@ export class ChatActions {
    */
   async getChatMode(): Promise<string> {
     const modeSelector = this.page.getByTestId("chat-mode-selector");
-    return await modeSelector.textContent() || "";
+    return (await modeSelector.textContent()) || "";
   }
 
   /**

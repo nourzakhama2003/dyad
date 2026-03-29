@@ -234,7 +234,12 @@ export default function AppDetailsPage() {
       await invalidateAppQuery(queryClient, { appId });
       await refreshApps();
       // Create initial chat with effective default mode (only if quota and settings are loaded)
-      let effectiveDefaultMode: undefined | "ask" | "build" | "local-agent" | "plan";
+      let effectiveDefaultMode:
+        | undefined
+        | "ask"
+        | "build"
+        | "local-agent"
+        | "plan";
       if (!quotaLoading && settings) {
         const freeAgentQuotaAvailable = !isQuotaExceeded;
         effectiveDefaultMode = getEffectiveDefaultChatMode(
