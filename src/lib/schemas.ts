@@ -14,6 +14,8 @@ export const ChatSummarySchema = z.object({
   id: z.number(),
   appId: z.number(),
   title: z.string().nullable(),
+  // Persisted chat mode for this specific chat (null = use global setting)
+  chatMode: z.enum(["ask", "build", "local-agent", "plan"]).nullable(),
   createdAt: z.date(),
 });
 

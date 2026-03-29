@@ -38,6 +38,9 @@ import {
   getFileExtension,
 } from "./media-library/media-folder-utils";
 import { MediaFolderOpen } from "./media-library/MediaFolderOpen";
+import { useSettings } from "@/hooks/useSettings";
+import { getEffectiveDefaultChatMode } from "@/lib/schemas";
+import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
 import { ImageLightbox } from "./chat/ImageLightbox";
 import { buildDyadMediaUrl } from "@/lib/dyadMediaUrl";
 import { AppSearchSelect } from "./AppSearchSelect";
@@ -84,6 +87,9 @@ export function DyadAppMediaFolder({
   const [previewFile, setPreviewFile] = useState<MediaFile | null>(null);
   const queryClient = useQueryClient();
   const { selectChat } = useSelectChat();
+  // For calculating effective default chat mode
+  const { settings, envVars } = useSettings();
+  const { isQuotaExceeded, isLoading: quotaLoading } = useFreeAgentQuota();
 
   const moveTargetApps = useMemo(
     () => allApps.filter((app) => app.id !== appId),
@@ -100,7 +106,18 @@ export function DyadAppMediaFolder({
   const handleStartNewChatWithImage = async (file: MediaFile) => {
     setIsStartingChat(true);
     try {
-      const chatId = await ipc.chat.createChat(file.appId);
+      // Calculate effective default mode
+      const freeAgentQuotaAvailable = !quotaLoading && !isQuotaExceeded;
+      const effectiveDefaultMode = getEffectiveDefaultChatMode(
+        settings!,
+        envVars,
+        freeAgentQuotaAvailable,
+      );
+
+      const chatId = await ipc.chat.createChat({
+        appId: file.appId,
+        initialChatMode: effectiveDefaultMode,
+      });
       await queryClient.invalidateQueries({ queryKey: queryKeys.chats.all });
       selectChat({
         chatId,

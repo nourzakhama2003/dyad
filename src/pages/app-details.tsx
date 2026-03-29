@@ -46,6 +46,9 @@ import { AppUpgrades } from "@/components/AppUpgrades";
 import { CapacitorControls } from "@/components/CapacitorControls";
 import { GithubCollaboratorManager } from "@/components/GithubCollaboratorManager";
 import { useAddAppToFavorite } from "@/hooks/useAddAppToFavorite";
+import { useSettings } from "@/hooks/useSettings";
+import { getEffectiveDefaultChatMode } from "@/lib/schemas";
+import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
 
 export default function AppDetailsPage() {
   const navigate = useNavigate();
@@ -79,6 +82,10 @@ export default function AppDetailsPage() {
   const nameExists = checkNameResult?.exists ?? false;
   const { toggleFavorite, isLoading: isFavoriteLoading } =
     useAddAppToFavorite();
+
+  // For calculating effective default chat mode when creating new chats
+  const { settings, envVars } = useSettings();
+  const { isQuotaExceeded, isLoading: quotaLoading } = useFreeAgentQuota();
 
   // Get the appId from search params and find the corresponding app
   const appId = search.appId ? Number(search.appId) : null;
@@ -226,7 +233,18 @@ export default function AppDetailsPage() {
       setSelectedAppId(appId);
       await invalidateAppQuery(queryClient, { appId });
       await refreshApps();
-      await ipc.chat.createChat(appId);
+      // Create initial chat with effective default mode
+      const freeAgentQuotaAvailable =
+        !quotaLoading && !isQuotaExceeded;
+      const effectiveDefaultMode = getEffectiveDefaultChatMode(
+        settings!,
+        envVars,
+        freeAgentQuotaAvailable,
+      );
+      await ipc.chat.createChat({
+        appId,
+        initialChatMode: effectiveDefaultMode,
+      });
       setIsCopyDialogOpen(false);
       navigate({ to: "/app-details", search: { appId } });
     },

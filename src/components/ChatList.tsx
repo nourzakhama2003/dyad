@@ -15,7 +15,7 @@ import { dropdownOpenAtom } from "@/atoms/uiAtoms";
 import { ipc } from "@/ipc/types";
 import { showError, showSuccess } from "@/lib/toast";
 import { useSettings } from "@/hooks/useSettings";
-import { getEffectiveDefaultChatMode } from "@/lib/schemas";
+import { getEffectiveDefaultChatMode, type ChatMode } from "@/lib/schemas";
 import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
 import {
   SidebarGroup,
@@ -108,18 +108,26 @@ export function ChatList({ show }: { show?: boolean }) {
     // Only create a new chat if an app is selected
     if (selectedAppId) {
       try {
-        // Create a new chat with an empty title for now
-        const chatId = await ipc.chat.createChat(selectedAppId);
-
-        // Set the default chat mode for the new chat
+        // Determine the effective default mode before creating the chat
         // Only consider quota available if it has finished loading and is not exceeded
+        let effectiveDefaultMode: ChatMode = "build";
         if (settings) {
           const freeAgentQuotaAvailable = !isQuotaLoading && !isQuotaExceeded;
-          const effectiveDefaultMode = getEffectiveDefaultChatMode(
+          effectiveDefaultMode = getEffectiveDefaultChatMode(
             settings,
             envVars,
             freeAgentQuotaAvailable,
           );
+        }
+
+        // Create a new chat with the initial mode persisted to the database
+        const chatId = await ipc.chat.createChat({
+          appId: selectedAppId,
+          initialChatMode: effectiveDefaultMode,
+        });
+
+        // Update the global setting for UI consistency
+        if (settings) {
           updateSettings({ selectedChatMode: effectiveDefaultMode });
         }
 
