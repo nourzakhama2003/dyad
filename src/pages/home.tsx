@@ -185,29 +185,16 @@ export default function HomePage() {
       let chatId: number;
       let appId: number;
 
-      // Only determine mode if we have complete information
-      // If quota or settings are still loading, let server use defaults
-      let effectiveDefaultMode:
-        | undefined
-        | "ask"
-        | "build"
-        | "local-agent"
-        | "plan";
-      if (!isQuotaLoading && settings) {
-        const freeAgentQuotaAvailable = !isQuotaExceeded;
-        effectiveDefaultMode = getEffectiveDefaultChatMode(
-          settings,
-          envVars,
-          freeAgentQuotaAvailable,
-        );
-      }
+      // Use the user's currently selected mode from home input, not the effective default
+      // This ensures the chat submission uses the mode the user just chose
+      const submissionChatMode = settings?.selectedChatMode;
 
       if (selectedApp) {
         // Existing app flow: create a new chat in the selected app with initial mode
         chatId = await ipc.chat.createChat({
           appId: selectedApp.id,
-          ...(effectiveDefaultMode && {
-            initialChatMode: effectiveDefaultMode,
+          ...(submissionChatMode && {
+            initialChatMode: submissionChatMode,
           }),
         });
         appId = selectedApp.id;
@@ -215,8 +202,8 @@ export default function HomePage() {
         // New app flow (default behavior)
         const result = await ipc.app.createApp({
           name: generateCuteAppName(),
-          ...(effectiveDefaultMode && {
-            initialChatMode: effectiveDefaultMode,
+          ...(submissionChatMode && {
+            initialChatMode: submissionChatMode,
           }),
         });
         chatId = result.chatId;

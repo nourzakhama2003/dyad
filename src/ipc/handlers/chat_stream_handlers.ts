@@ -769,7 +769,9 @@ ${componentSnippet}
           chatMode: effectiveStreamMode,
           enableTurboEditsV2: isTurboEditsV2Enabled(settings),
           themePrompt,
-          basicAgentMode: effectiveStreamMode === "local-agent" && !isDyadProEnabled(settings),
+          basicAgentMode:
+            effectiveStreamMode === "local-agent" &&
+            !isDyadProEnabled(settings),
         });
 
         // Add information about mentioned apps if any
@@ -1216,7 +1218,9 @@ This conversation includes one or more image attachments. When the user uploads 
           !mentionedAppsCodebases.length
         ) {
           // Check quota for local-agent mode (non-Pro users)
-          const isBasicAgentModeRequest = effectiveStreamMode === "local-agent" && !isDyadProEnabled(settings);
+          const isBasicAgentModeRequest =
+            effectiveStreamMode === "local-agent" &&
+            !isDyadProEnabled(settings);
           if (isBasicAgentModeRequest) {
             const quotaStatus = await getFreeAgentQuotaStatus();
             if (quotaStatus.isQuotaExceeded) {

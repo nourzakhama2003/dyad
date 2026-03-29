@@ -20,7 +20,6 @@ export function useChatModeToggle() {
     return typeof id === "number" ? { id } : undefined;
   }, [router.state.location.pathname, router.state.location.search]);
 
-
   // Detect if user is on mac
   const isMac = useIsMac();
 
@@ -60,10 +59,13 @@ export function useChatModeToggle() {
         // Invalidate chat cache so stale mode isn't restored on tab switch
         queryClient.invalidateQueries({ queryKey: queryKeys.chats.all });
       } catch (error) {
-        console.error("Failed to persist keyboard shortcut mode change:", error);
+        console.error(
+          "Failed to persist keyboard shortcut mode change:",
+          error,
+        );
       }
     }
-  }, [settings, updateSettings, posthog, chatId]);
+  }, [settings, updateSettings, posthog, chatId, queryClient]);
 
   // Add keyboard shortcut with memoized modifiers
   useShortcut(
