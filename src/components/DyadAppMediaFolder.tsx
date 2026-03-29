@@ -122,6 +122,7 @@ export function DyadAppMediaFolder({
       selectChat({
         chatId,
         appId: file.appId,
+        chatMode: effectiveDefaultMode,
         prefillInput: `@media:${encodeURIComponent(file.fileName)} `,
       });
     } catch (error) {

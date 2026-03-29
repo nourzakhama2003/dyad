@@ -223,7 +223,7 @@ export const chatContracts = {
     channel: "update-chat-mode",
     input: z.object({
       chatId: z.number(),
-      chatMode: z.enum(["ask", "build", "local-agent", "plan"]),
+      chatMode: z.enum(["ask", "build", "local-agent", "plan"]).nullable(),
     }),
     output: z.void(),
   }),

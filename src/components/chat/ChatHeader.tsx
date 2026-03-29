@@ -94,20 +94,26 @@ export function ChatHeader({
   const handleNewChat = async () => {
     if (appId) {
       try {
-        // determine the best default mode: Cannot use settings.defaultChatMode directly because three factors can overide it in priority order
-        const freeAgentQuotaAvailable = !quotaLoading && !isQuotaExceeded;
-        const effectiveDefaultMode = getEffectiveDefaultChatMode(
-          settings!,
-          envVars,
-          freeAgentQuotaAvailable,
-        );
+        // Only set initial mode if we have complete information
+        // If quota is loading, don't assume availability - let server-side default be used
+        let initialChatMode: undefined | "ask" | "build" | "local-agent" | "plan";
+        if (!quotaLoading && settings) {
+          const freeAgentQuotaAvailable = !isQuotaExceeded;
+          initialChatMode = getEffectiveDefaultChatMode(
+            settings,
+            envVars,
+            freeAgentQuotaAvailable,
+          );
+        }
+        // If quotaLoading is true or settings not loaded, initialChatMode stays undefined
+        // (server will use global default)
 
         const chatId = await ipc.chat.createChat({
           appId,
-          initialChatMode: effectiveDefaultMode,
+          ...(initialChatMode && { initialChatMode }),
         });
         await invalidateChats();
-        selectChat({ chatId, appId });
+        selectChat({ chatId, appId, chatMode: initialChatMode });
       } catch (error) {
         showError(t("failedCreateChat", { error: (error as any).toString() }));
       }

@@ -44,7 +44,7 @@ export function ChatList({ show }: { show?: boolean }) {
   const [selectedChatId, setSelectedChatId] = useAtom(selectedChatIdAtom);
   const [selectedAppId] = useAtom(selectedAppIdAtom);
   const [, setIsDropdownOpen] = useAtom(dropdownOpenAtom);
-  const { settings, updateSettings, envVars } = useSettings();
+  const { settings, envVars } = useSettings();
   const { isQuotaExceeded, isLoading: isQuotaLoading } = useFreeAgentQuota();
 
   const { chats, loading, invalidateChats } = useChats(selectedAppId);
@@ -96,11 +96,13 @@ export function ChatList({ show }: { show?: boolean }) {
   const handleChatClick = ({
     chatId,
     appId,
+    chatMode,
   }: {
     chatId: number;
     appId: number;
+    chatMode?: "ask" | "build" | "local-agent" | "plan" | null;
   }) => {
-    selectChat({ chatId, appId });
+    selectChat({ chatId, appId, chatMode: chatMode || undefined });
     setIsSearchDialogOpen(false);
   };
 
@@ -108,35 +110,30 @@ export function ChatList({ show }: { show?: boolean }) {
     // Only create a new chat if an app is selected
     if (selectedAppId) {
       try {
-        // Determine the effective default mode before creating the chat
-        // Only consider quota available if it has finished loading and is not exceeded
-        let effectiveDefaultMode: ChatMode = "build";
-        if (settings) {
-          const freeAgentQuotaAvailable = !isQuotaLoading && !isQuotaExceeded;
+        // Only set initial mode if we have complete information
+        let effectiveDefaultMode: ChatMode | undefined;
+        if (!isQuotaLoading && settings) {
+          const freeAgentQuotaAvailable = !isQuotaExceeded;
           effectiveDefaultMode = getEffectiveDefaultChatMode(
             settings,
             envVars,
             freeAgentQuotaAvailable,
           );
         }
+        // If quotaLoading or settings not loaded, mode stays undefined
 
         // Create a new chat with the initial mode persisted to the database
         const chatId = await ipc.chat.createChat({
           appId: selectedAppId,
-          initialChatMode: effectiveDefaultMode,
+          ...(effectiveDefaultMode && { initialChatMode: effectiveDefaultMode }),
         });
-
-        // Update the global setting for UI consistency
-        if (settings) {
-          updateSettings({ selectedChatMode: effectiveDefaultMode });
-        }
 
         // Refresh the chat list first so the new chat is in the cache
         // before selectChat adds it to the tab bar
         await invalidateChats();
 
         // Navigate to the new chat (use selectChat so it appears at front of tab bar)
-        selectChat({ chatId, appId: selectedAppId });
+        selectChat({ chatId, appId: selectedAppId, chatMode: effectiveDefaultMode });
       } catch (error) {
         // DO A TOAST
         showError(t("failedCreateChat", { error: (error as any).toString() }));
@@ -244,6 +241,7 @@ export function ChatList({ show }: { show?: boolean }) {
                           handleChatClick({
                             chatId: chat.id,
                             appId: chat.appId,
+                            chatMode: chat.chatMode,
                           })
                         }
                         className={`justify-start w-full text-left py-3 pr-1 hover:bg-sidebar-accent/80 ${

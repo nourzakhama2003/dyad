@@ -391,6 +391,7 @@ export function ChatTabs({ selectedChatId }: ChatTabsProps) {
       chatId: chat.id,
       appId: chat.appId,
       preserveTabOrder: true,
+      chatMode: chat.chatMode || undefined,
     });
   };
 
@@ -420,6 +421,7 @@ export function ChatTabs({ selectedChatId }: ChatTabsProps) {
       chatId: fallbackTab.id,
       appId: fallbackTab.appId,
       preserveTabOrder: true,
+      chatMode: fallbackTab.chatMode || undefined,
     });
   };
 
@@ -448,6 +450,7 @@ export function ChatTabs({ selectedChatId }: ChatTabsProps) {
             chatId: fallbackTab.id,
             appId: fallbackTab.appId,
             preserveTabOrder: true,
+            chatMode: fallbackTab.chatMode || undefined,
           });
         }
       }

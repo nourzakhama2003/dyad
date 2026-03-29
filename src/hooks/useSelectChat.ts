@@ -8,7 +8,6 @@ import {
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { useNavigate } from "@tanstack/react-router";
 import { useSettings } from "./useSettings";
-import { ipc } from "@/ipc/types";
 import log from "electron-log";
 
 const logger = log.scope("useSelectChat");
@@ -23,16 +22,18 @@ export function useSelectChat() {
   const { updateSettings } = useSettings();
 
   return {
-    selectChat: async ({
+    selectChat: ({
       chatId,
       appId,
       preserveTabOrder = false,
       prefillInput,
+      chatMode,
     }: {
       chatId: number;
       appId: number;
       preserveTabOrder?: boolean;
       prefillInput?: string;
+      chatMode?: "ask" | "build" | "local-agent" | "plan" | null;
     }) => {
       setSelectedChatId(chatId);
       setSelectedAppId(appId);
@@ -42,24 +43,19 @@ export function useSelectChat() {
         pushRecentViewedChatId(chatId);
       }
 
-      // Restore chat mode if it was saved for this chat
-      try {
-        const chat = await ipc.chat.getChat(chatId);
-        // If the chat has a saved chatMode, apply it
-        if (chat.chatMode) {
-          await updateSettings({ selectedChatMode: chat.chatMode });
-        }
-        // Otherwise, keep the current selected mode
-        // (backward compat for chats created before this feature)
-      } catch (error) {
-        logger.error("Error fetching chat mode:", error);
-        // Continue with current mode if fetch fails
-      }
-
+      // Navigate immediately - don't block on async mode restoration
       const navigationResult = navigate({
         to: "/chat",
         search: { id: chatId },
       });
+
+      // Restore chat mode async in the background if provided
+      // This prevents navigation delays for large chats
+      if (chatMode) {
+        updateSettings({ selectedChatMode: chatMode }).catch((error) => {
+          logger.error("Error updating chat mode:", error);
+        });
+      }
 
       if (prefillInput !== undefined) {
         Promise.resolve(navigationResult)
