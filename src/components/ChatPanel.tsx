@@ -124,7 +124,14 @@ export function ChatPanel({
       next.set(chatId, chat.messages);
       return next;
     });
-  }, [chatId, setMessagesById]);
+
+    // Synchronize the chat's persisted mode to global settings
+    // This ensures the UI shows the correct mode even for navigation paths
+    // that bypass selectChat (e.g., direct /chat redirects)
+    if (chat.chatMode && settings?.selectedChatMode !== chat.chatMode) {
+      updateSettings({ selectedChatMode: chat.chatMode });
+    }
+  }, [chatId, setMessagesById, settings?.selectedChatMode, updateSettings]);
 
   useEffect(() => {
     fetchChatMessages();
