@@ -159,6 +159,7 @@ export function registerChatHandlers() {
         appId: chats.appId,
         title: chats.title,
         createdAt: chats.createdAt,
+        chatMode: chats.chatMode,
       })
       .from(chats)
       .where(and(eq(chats.appId, appId), like(chats.title, `%${query}%`)))
@@ -171,6 +172,7 @@ export function registerChatHandlers() {
       title: c.title,
       createdAt: c.createdAt,
       matchedMessageContent: null,
+      chatMode: c.chatMode,
     }));
 
     // 2) Find messages that match and join to chats to build one result per message
@@ -181,6 +183,7 @@ export function registerChatHandlers() {
         title: chats.title,
         createdAt: chats.createdAt,
         matchedMessageContent: messages.content,
+        chatMode: chats.chatMode,
       })
       .from(messages)
       .innerJoin(chats, eq(messages.chatId, chats.id))

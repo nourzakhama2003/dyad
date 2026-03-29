@@ -51,6 +51,7 @@ export type App = z.infer<typeof AppSchema>;
  */
 export const CreateAppParamsSchema = z.object({
   name: z.string().min(1),
+  initialChatMode: z.enum(["ask", "build", "local-agent", "plan"]).optional(),
 });
 
 /**
