@@ -139,7 +139,7 @@ export function registerChatHandlers() {
       .set({ chatMode })
       .where(eq(chats.id, chatId));
 
-    if (!result) {
+    if (result.changes === 0) {
       throw new DyadError("Chat not found", DyadErrorKind.NotFound);
     }
 

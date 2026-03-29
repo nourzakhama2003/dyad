@@ -34,13 +34,13 @@ test("chat mode persists when switching between chats", async ({ po }) => {
     .filter({ hasNot: po.page.locator('button[aria-current="page"]') });
   
   const inactiveTabs = await inactiveTab.all();
-  if (inactiveTabs.length > 0) {
-    // Click the first (only) inactive tab which should be Chat 1
-    await inactiveTabs[0].locator("button").first().click();
-    
-    // Wait a moment and verify Chat 1 is still in "Ask" mode
-    await po.page.waitForTimeout(500);
-    modeText = await po.chatActions.getChatMode();
-    expect(modeText).toContain("Ask");
-  }
+  // Ensure we have exactly one inactive tab (Chat 1)
+  expect(inactiveTabs).toHaveLength(1);
+  
+  // Click the inactive tab
+  await inactiveTabs[0].locator("button").first().click();
+  
+  // Wait for the chat mode to update and verify Chat 1 is still in "Ask" mode
+  // Use polling instead of fixed timeout for deterministic test behavior
+  await expect.poll(async () => po.chatActions.getChatMode()).toContain("Ask");
 });

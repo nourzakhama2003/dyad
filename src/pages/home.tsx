@@ -185,19 +185,23 @@ export default function HomePage() {
       let chatId: number;
       let appId: number;
 
-    // determine the best default mode (overide factors)
-      const freeAgentQuotaAvailable = !isQuotaLoading && !isQuotaExceeded;
-      const effectiveDefaultMode = getEffectiveDefaultChatMode(
-        settings!,
-        envVars,
-        freeAgentQuotaAvailable,
-      );
+      // Only determine mode if we have complete information
+      // If quota or settings are still loading, let server use defaults
+      let effectiveDefaultMode: undefined | "ask" | "build" | "local-agent" | "plan";
+      if (!isQuotaLoading && settings) {
+        const freeAgentQuotaAvailable = !isQuotaExceeded;
+        effectiveDefaultMode = getEffectiveDefaultChatMode(
+          settings,
+          envVars,
+          freeAgentQuotaAvailable,
+        );
+      }
 
       if (selectedApp) {
         // Existing app flow: create a new chat in the selected app with initial mode
         chatId = await ipc.chat.createChat({
           appId: selectedApp.id,
-          initialChatMode: effectiveDefaultMode,
+          ...(effectiveDefaultMode && { initialChatMode: effectiveDefaultMode }),
         });
         appId = selectedApp.id;
       } else {
@@ -245,7 +249,7 @@ export default function HomePage() {
       await queryClient.invalidateQueries({ queryKey: queryKeys.chats.all });
       posthog.capture("home:chat-submit", { existingApp: !!selectedApp });
       // Select newly created first chat so it appears first in tabs.
-      selectChat({ chatId, appId });
+      selectChat({ chatId, appId, chatMode: effectiveDefaultMode });
     } catch (error) {
       console.error("Failed to create chat:", error);
       showError(
