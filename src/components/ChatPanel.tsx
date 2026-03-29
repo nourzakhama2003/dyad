@@ -138,16 +138,27 @@ export function ChatPanel({
       return;
     }
 
+    let isMounted = true;
+    const currentChatId = chatId; // Capture to guard against stale responses
+
     const syncChatMode = async () => {
       const chat = await ipc.chat.getChat(chatId);
-      // Only sync mode if this is the initial load with a persisted mode
-      // Don't sync if user just changed mode (that update is in-flight to backend)
-      if (chat.chatMode && settings?.selectedChatMode !== chat.chatMode) {
+      // Guard against stale responses from slower chat fetches on previous tabs
+      // Only apply the mode sync if this response is still for the current chat
+      if (
+        isMounted &&
+        currentChatId === chatId &&
+        chat.chatMode &&
+        settings?.selectedChatMode !== chat.chatMode
+      ) {
         updateSettings({ selectedChatMode: chat.chatMode });
       }
     };
 
     syncChatMode();
+    return () => {
+      isMounted = false;
+    };
   }, [chatId]); // Only re-run on chat switch, not on mode changes
 
   const isStreaming = chatId ? (isStreamingById.get(chatId) ?? false) : false;
