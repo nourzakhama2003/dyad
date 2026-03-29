@@ -181,12 +181,9 @@ export default function HomePage() {
     try {
       setLoadingMode(selectedApp ? "existing" : "new");
       setIsLoading(true);
-
       let chatId: number;
       let appId: number;
-
       // Use the user's currently selected mode from home input, not the effective default
-      // This ensures the chat submission uses the mode the user just chose
       const submissionChatMode = settings?.selectedChatMode;
 
       if (selectedApp) {

@@ -576,10 +576,18 @@ ${componentSnippet}
         })
         .returning();
 
+      // Refetch messages after inserting the placeholder to include it in the initial chunk
+      const updatedMessages = await db.query.messages.findMany({
+        where: eq(messages.chatId, req.chatId),
+        orderBy: (messages, { asc }) => [asc(messages.createdAt)],
+      });
+
       // Send the messages right away so that the loading state is shown for the message.
+      // Now includes the placeholder assistant message so the stream anchor is visible.
       safeSend(event.sender, "chat:response:chunk", {
         chatId: req.chatId,
-        messages: updatedChat.messages,
+        messages: updatedMessages,
+        streamingMessageId: placeholderAssistantMessage.id,
       });
 
       let fullResponse = "";
