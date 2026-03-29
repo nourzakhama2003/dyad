@@ -15,6 +15,7 @@ const logger = log.scope("useSelectChat");
 
 export function useSelectChat() {
   const settingsUpdateAbortRef = useRef<AbortController | null>(null);
+  const currentModeUpdateChatIdRef = useRef<number | null>(null);
   const setSelectedChatId = useSetAtom(selectedChatIdAtom);
   const setSelectedAppId = useSetAtom(selectedAppIdAtom);
   const pushRecentViewedChatId = useSetAtom(pushRecentViewedChatIdAtom);
@@ -62,20 +63,17 @@ export function useSelectChat() {
       if (chatMode) {
         const abortController = new AbortController();
         settingsUpdateAbortRef.current = abortController;
+        // Track which chat this mode update is for, so we ignore stale updates
+        currentModeUpdateChatIdRef.current = chatId;
         
-        const abortPromise = new Promise<never>((_, reject) => {
-          abortController.addEventListener("abort", () => {
-            const error = new Error("Stale chat mode update cancelled");
-            error.name = "AbortError";
-            reject(error);
-          });
-        });
-        
-        Promise.race([updateSettings({ selectedChatMode: chatMode }), abortPromise])
+        updateSettings({ selectedChatMode: chatMode })
           .catch((error) => {
-            // Ignore abort errors - just means we switched chats again
-            if (error?.name !== "AbortError") {
-              logger.error("Error updating chat mode:", error);
+            // Only log errors if this is still the current chat
+            if (currentModeUpdateChatIdRef.current === chatId) {
+              // Ignore abort errors - just means we switched chats again
+              if (error?.name !== "AbortError") {
+                logger.error("Error updating chat mode:", error);
+              }
             }
           });
       }
