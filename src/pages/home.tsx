@@ -185,9 +185,20 @@ export default function HomePage() {
       let chatId: number;
       let appId: number;
 
+    // determine the best default mode (overide factors)
+      const freeAgentQuotaAvailable = !isQuotaLoading && !isQuotaExceeded;
+      const effectiveDefaultMode = getEffectiveDefaultChatMode(
+        settings!,
+        envVars,
+        freeAgentQuotaAvailable,
+      );
+
       if (selectedApp) {
-        // Existing app flow: create a new chat in the selected app
-        chatId = await ipc.chat.createChat(selectedApp.id);
+        // Existing app flow: create a new chat in the selected app with initial mode
+        chatId = await ipc.chat.createChat({
+          appId: selectedApp.id,
+          initialChatMode: effectiveDefaultMode,
+        });
         appId = selectedApp.id;
       } else {
         // New app flow (default behavior)

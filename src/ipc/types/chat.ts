@@ -38,6 +38,7 @@ export const ChatSchema = z.object({
   messages: z.array(MessageSchema),
   initialCommitHash: z.string().nullable().optional(),
   dbTimestamp: z.string().nullable().optional(),
+  chatMode: z.enum(["ask", "build", "local-agent", "plan"]).nullable().optional(),
 });
 
 export type Chat = z.infer<typeof ChatSchema>;
@@ -191,6 +192,8 @@ export const chatContracts = {
         id: z.number(),
         appId: z.number(),
         title: z.string().nullable(),
+        // Persisted chat mode for this specific chat (null = use global setting)
+        chatMode: z.enum(["ask", "build", "local-agent", "plan"]).nullable(),
         createdAt: z.date(),
       }),
     ),
@@ -198,13 +201,30 @@ export const chatContracts = {
 
   createChat: defineContract({
     channel: "create-chat",
-    input: z.number(), // appId
+    input: z.union([
+      z.number(), // for Backward compatibility: just appId
+      z.object({
+        appId: z.number(),
+        // Initial chat mode to persist for this new chat
+        // Falls back to global default if not specified
+        initialChatMode: z.enum(["ask", "build", "local-agent", "plan"]).optional(),
+      }),
+    ]),
     output: CreateChatResultSchema,
   }),
 
   updateChat: defineContract({
     channel: "update-chat",
     input: UpdateChatParamsSchema,
+    output: z.void(),
+  }),
+
+  updateChatMode: defineContract({
+    channel: "update-chat-mode",
+    input: z.object({
+      chatId: z.number(),
+      chatMode: z.enum(["ask", "build", "local-agent", "plan"]),
+    }),
     output: z.void(),
   }),
 

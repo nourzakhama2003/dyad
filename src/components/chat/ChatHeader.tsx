@@ -31,6 +31,9 @@ import { useRenameBranch } from "@/hooks/useRenameBranch";
 import { isAnyCheckoutVersionInProgressAtom } from "@/store/appAtoms";
 import { LoadingBar } from "../ui/LoadingBar";
 import { UncommittedFilesBanner } from "./UncommittedFilesBanner";
+import { useSettings } from "@/hooks/useSettings";
+import { getEffectiveDefaultChatMode } from "@/lib/schemas";
+import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
 
 interface ChatHeaderProps {
   isVersionPaneOpen: boolean;
@@ -56,6 +59,9 @@ export function ChatHeader({
   const isAnyCheckoutVersionInProgress = useAtomValue(
     isAnyCheckoutVersionInProgressAtom,
   );
+  // For calculating effective default chat mode when creating new chats
+  const { settings, envVars } = useSettings();
+  const { isQuotaExceeded, isLoading: quotaLoading } = useFreeAgentQuota();
 
   const {
     branchInfo,
@@ -88,7 +94,18 @@ export function ChatHeader({
   const handleNewChat = async () => {
     if (appId) {
       try {
-        const chatId = await ipc.chat.createChat(appId);
+        // determine the best default mode: Cannot use settings.defaultChatMode directly because three factors can overide it in priority order
+        const freeAgentQuotaAvailable = !quotaLoading && !isQuotaExceeded;
+        const effectiveDefaultMode = getEffectiveDefaultChatMode(
+          settings!,
+          envVars,
+          freeAgentQuotaAvailable,
+        );
+
+        const chatId = await ipc.chat.createChat({
+          appId,
+          initialChatMode: effectiveDefaultMode,
+        });
         await invalidateChats();
         selectChat({ chatId, appId });
       } catch (error) {

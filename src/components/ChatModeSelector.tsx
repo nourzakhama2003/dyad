@@ -23,6 +23,10 @@ import { LocalAgentNewChatToast } from "./LocalAgentNewChatToast";
 import { useAtomValue } from "jotai";
 import { chatMessagesByIdAtom } from "@/atoms/chatAtoms";
 import { Hammer, Bot, MessageCircle, Lightbulb } from "lucide-react";
+import { ipc } from "@/ipc/types";
+import log from "electron-log";
+
+const logger = log.scope("ChatModeSelector");
 
 function NewBadge() {
   return (
@@ -47,9 +51,23 @@ export function ChatModeSelector() {
   const { servers } = useMcp();
   const enabledMcpServersCount = servers.filter((s) => s.enabled).length;
 
-  const handleModeChange = (value: string) => {
+  const handleModeChange = async (value: string) => {
     const newMode = value as ChatMode;
-    updateSettings({ selectedChatMode: newMode });
+    await updateSettings({ selectedChatMode: newMode });
+
+    // If we're in a chat, also save the mode to this specific chat
+    if (chatId && isChatRoute) {
+      try {
+        await ipc.chat.updateChatMode({
+          chatId,
+          chatMode: newMode,
+        });
+      } catch (error) {
+        logger.error("Error saving chat mode to database:", error);
+        // Don't show error to user - it's not critical if DB save fails
+        // The mode is already in settings for this session
+      }
+    }
 
     // We want to show a toast when user is switching to the new agent mode
     // because they might weird results mixing Build and Agent mode in the same chat.

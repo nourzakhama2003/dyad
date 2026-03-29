@@ -111,6 +111,53 @@ export class ChatActions {
       .click();
   }
 
+  /**
+   * Get the current chat mode displayed in the mode selector.
+   * Returns the visible text from the chat mode selector button.
+   */
+  async getChatMode(): Promise<string> {
+    const modeSelector = this.page.getByTestId("chat-mode-selector");
+    return await modeSelector.textContent() || "";
+  }
+
+  /**
+   * Set the chat mode (alias for selectChatMode for convenience).
+   */
+  async setChatMode(
+    mode: "build" | "ask" | "agent" | "local-agent" | "basic-agent" | "plan",
+  ) {
+    await this.selectChatMode(mode);
+  }
+
+  /**
+   * Create a new chat by clicking the new chat button.
+   */
+  async createNewChat(options?: { index?: number }) {
+    await this.clickNewChat(options);
+    // Wait a moment for the chat to be created
+    await this.page.waitForTimeout(500);
+  }
+
+  /**
+   * Switch to a recent chat by index (1-based, where 1 is the most recent).
+   * This clicks on the chat tab in the tab bar.
+   */
+  async switchToRecentChat(index: number) {
+    // Get all chat tabs - they are usually in a container
+    const chatTabs = this.page.locator('[data-testid*="chat-tab"]');
+    const count = await chatTabs.count();
+
+    // Validate index
+    if (index < 1 || index > count) {
+      throw new Error(
+        `Invalid chat index ${index}. Only ${count} chats available.`,
+      );
+    }
+
+    // Index is 1-based, but locator index is 0-based
+    await chatTabs.nth(index - 1).click();
+  }
+
   async selectLocalAgentMode() {
     await this.selectChatMode("local-agent");
   }

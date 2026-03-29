@@ -13,7 +13,17 @@ import { chatContracts } from "../types/chat";
 const logger = log.scope("chat_handlers");
 
 export function registerChatHandlers() {
-  createTypedHandler(chatContracts.createChat, async (_, appId) => {
+  createTypedHandler(chatContracts.createChat, async (_, input) => {
+    // Handle both old format (just appId) and new format (object with appId and initialChatMode)
+    let appId: number;
+    let initialChatMode: "ask" | "build" | "local-agent" | "plan" | undefined;
+    if (typeof input === "number") {
+      appId = input;
+    } else {
+      appId = input.appId;
+      initialChatMode = input.initialChatMode;
+    }
+
     // Get the app's path first
     const app = await db.query.apps.findFirst({
       where: eq(apps.id, appId),
@@ -37,12 +47,14 @@ export function registerChatHandlers() {
       // Continue without the git revision
     }
 
-    // Create a new chat
+    // Create a new chat with the initial chat mode
     const [chat] = await db
       .insert(chats)
       .values({
         appId,
         initialCommitHash,
+        // Save the chat mode provided during creation (null for backward compatibility)
+        chatMode: initialChatMode || null,
       })
       .returning();
     logger.info(
@@ -52,6 +64,8 @@ export function registerChatHandlers() {
       appId,
       "with initial commit hash:",
       initialCommitHash,
+      "and mode:",
+      initialChatMode,
     );
     return chat.id;
   });
@@ -90,6 +104,7 @@ export function registerChatHandlers() {
             title: true,
             createdAt: true,
             appId: true,
+            chatMode: true,
           },
           orderBy: [desc(chats.createdAt)],
         })
@@ -99,6 +114,7 @@ export function registerChatHandlers() {
             title: true,
             createdAt: true,
             appId: true,
+            chatMode: true,
           },
           orderBy: [desc(chats.createdAt)],
         });
@@ -114,6 +130,20 @@ export function registerChatHandlers() {
   createTypedHandler(chatContracts.updateChat, async (_, params) => {
     const { chatId, title } = params;
     await db.update(chats).set({ title }).where(eq(chats.id, chatId));
+  });
+
+  createTypedHandler(chatContracts.updateChatMode, async (_, params) => {
+    const { chatId, chatMode } = params;
+    const result = await db
+      .update(chats)
+      .set({ chatMode })
+      .where(eq(chats.id, chatId));
+
+    if (!result) {
+      throw new DyadError("Chat not found", DyadErrorKind.NotFound);
+    }
+
+    logger.info("Updated chat mode for chat:", chatId, "to:", chatMode);
   });
 
   createTypedHandler(chatContracts.deleteMessages, async (_, chatId) => {

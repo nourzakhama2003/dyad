@@ -423,7 +423,11 @@ export function ChatInput({ chatId }: { chatId?: number }) {
       setInputValue("");
       setNeedsFreshPlanChat(false);
 
-      const newChatId = await ipc.chat.createChat(appId);
+      // Create new chat with plan mode initialized
+      const newChatId = await ipc.chat.createChat({
+        appId,
+        initialChatMode: "plan",
+      });
       setSelectedChatId(newChatId);
       navigate({ to: "/chat", search: { id: newChatId } });
       queryClient.invalidateQueries({ queryKey: queryKeys.chats.all });
@@ -533,7 +537,11 @@ export function ChatInput({ chatId }: { chatId?: number }) {
   const handleNewChat = async () => {
     if (appId) {
       try {
-        const newChatId = await ipc.chat.createChat(appId);
+        // Create new chat with current mode
+        const newChatId = await ipc.chat.createChat({
+          appId,
+          initialChatMode: settings?.selectedChatMode,
+        });
         setSelectedChatId(newChatId);
         navigate({
           to: "/chat",
