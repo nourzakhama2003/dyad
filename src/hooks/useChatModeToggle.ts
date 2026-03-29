@@ -56,8 +56,8 @@ export function useChatModeToggle() {
           chatId: chatId.id,
           chatMode: newMode,
         });
-        // Invalidate chat cache so stale mode isn't restored on tab switch
-        queryClient.invalidateQueries({ queryKey: queryKeys.chats.all });
+        // Await cache invalidation to prevent stale mode being restored on rapid tab switch
+        await queryClient.invalidateQueries({ queryKey: queryKeys.chats.all });
       } catch (error) {
         console.error(
           "Failed to persist keyboard shortcut mode change:",
