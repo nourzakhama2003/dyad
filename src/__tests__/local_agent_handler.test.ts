@@ -1052,17 +1052,18 @@ describe("handleLocalAgentStream", () => {
 
         if (attemptCount === 1) {
           return {
-            fullStream: (async function* () {
-              throw {
-                type: "error",
-                sequence_number: 0,
-                error: {
-                  type: "server_error",
-                  code: "server_error",
-                  message: "The server had an error processing your request.",
-                },
-              };
-            })(),
+                fullStream: (async function* () {
+                  throw {
+                    type: "error",
+                    sequence_number: 0,
+                    error: {
+                      type: "server_error",
+                      code: "server_error",
+                      message: "The server had an error processing your request.",
+                    },
+                  };
+                  yield undefined; // Satisfy require-yield ESLint rule
+                })(),
             response: Promise.resolve({ messages: [] }),
             steps: Promise.resolve([]),
           };

@@ -29,7 +29,7 @@ import {
 } from "../../prompts/supabase_prompt";
 import { getDyadAppPath } from "../../paths/paths";
 import { buildDyadMediaUrl } from "../../lib/dyadMediaUrl";
-import { readSettings, writeSettings } from "../../main/settings";
+import { readSettings } from "../../main/settings";
 import type { ChatResponseEnd, ChatStreamParams } from "@/ipc/types";
 import { DyadError, DyadErrorKind } from "@/errors/dyad_error";
 import {
@@ -553,18 +553,8 @@ ${componentSnippet}
 
       // Use per-chat mode if set, otherwise fall back to current global setting
       // This respects the mode persisted to the chat record via selectChat
-      const effectiveStreamMode =
-        updatedChat.chatMode ?? settings.selectedChatMode;
-
-      // Synchronize settings to the resolved mode before streaming
-      // This ensures the backend streams with the correct mode
-      if (settings.selectedChatMode !== effectiveStreamMode) {
-        writeSettings({ selectedChatMode: effectiveStreamMode });
-        // Re-read settings after writeSettings to avoid using stale in-memory values
-        // This is especially important for getModelClient() call below which uses settings.selectedModel
-        const updatedSettings = readSettings();
-        Object.assign(settings, updatedSettings);
-      }
+      // Use the most recent user intent (settings) as the source of truth
+      const effectiveStreamMode = settings.selectedChatMode ?? updatedChat.chatMode;
 
       // Only Dyad Pro requests have request ids.
       if (settings.enableDyadPro) {
