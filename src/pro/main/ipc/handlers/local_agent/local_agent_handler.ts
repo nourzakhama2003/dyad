@@ -1739,7 +1739,7 @@ async function getMcpTools(
 
         mcpToolSet[key] = {
           description: mcpTool.description,
-          inputSchema: mcpTool.inputSchema,
+          inputSchema: mcpTool.inputSchema as any,
           execute: async (args: unknown, execCtx: ToolExecutionOptions) => {
             try {
               const inputPreview =

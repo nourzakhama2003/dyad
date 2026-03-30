@@ -1200,6 +1200,7 @@ This conversation includes one or more image attachments. When the user uploads 
               dyadRequestId: dyadRequestId ?? "[no-request-id]",
               readOnly: true,
               messageOverride: isSummarizeIntent ? chatMessages : undefined,
+              effectiveStreamMode: "ask",
             },
           );
           if (!streamSuccess) {
@@ -1995,7 +1996,7 @@ async function getMcpTools(event: IpcMainInvokeEvent): Promise<ToolSet> {
         const key = `${String(s.name || "").replace(/[^a-zA-Z0-9_-]/g, "-")}__${String(name).replace(/[^a-zA-Z0-9_-]/g, "-")}`;
         mcpToolSet[key] = {
           description: mcpTool.description,
-          inputSchema: mcpTool.inputSchema,
+          inputSchema: mcpTool.inputSchema as any,
           execute: async (args: unknown, execCtx: ToolExecutionOptions) => {
             const inputPreview =
               typeof args === "string"
