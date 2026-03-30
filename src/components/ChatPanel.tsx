@@ -84,10 +84,13 @@ export function ChatPanel({
 
   // Track previous chatId to detect chat switches
   const prevChatIdRef = useRef<number | undefined>(undefined);
+  // Ref to track the latest chatId for async staleness guard
+  const latestChatIdRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     const isChatSwitch = prevChatIdRef.current !== chatId;
     prevChatIdRef.current = chatId;
+    latestChatIdRef.current = chatId;
 
     isAtBottomRef.current = true;
     setShowScrollButton(false);
@@ -138,16 +141,16 @@ export function ChatPanel({
       return;
     }
 
-    let isMounted = true;
-    const currentChatId = chatId; // Capture to guard against stale responses
+    latestChatIdRef.current = chatId;
 
+    let isMounted = true;
     const syncChatMode = async () => {
-      const chat = await ipc.chat.getChat(chatId);
+      const thisRequestChatId = chatId;
+      const chat = await ipc.chat.getChat(thisRequestChatId);
       // Guard against stale responses from slower chat fetches on previous tabs
-      // Only apply the mode sync if this response is still for the current chat
       if (
         isMounted &&
-        currentChatId === chatId &&
+        latestChatIdRef.current === thisRequestChatId &&
         chat.chatMode &&
         settings?.selectedChatMode !== chat.chatMode
       ) {
@@ -159,7 +162,7 @@ export function ChatPanel({
     return () => {
       isMounted = false;
     };
-  }, [chatId]); // Only re-run on chat switch, not on mode changes
+  }, [chatId]);
 
   const isStreaming = chatId ? (isStreamingById.get(chatId) ?? false) : false;
 
