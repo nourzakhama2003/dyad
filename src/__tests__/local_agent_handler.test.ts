@@ -339,7 +339,7 @@ describe("handleLocalAgentStream", () => {
           placeholderMessageId: 10,
           systemPrompt: "You are helpful",
           dyadRequestId,
-          effectiveStreamMode: "local-agent",
+          effectiveStreamMode: "build",
         },
       );
 
@@ -369,7 +369,7 @@ describe("handleLocalAgentStream", () => {
           placeholderMessageId: 10,
           systemPrompt: "You are helpful",
           dyadRequestId,
-          effectiveStreamMode: "local-agent",
+          effectiveStreamMode: "build",
         },
       );
 
@@ -1052,21 +1052,26 @@ describe("handleLocalAgentStream", () => {
 
         if (attemptCount === 1) {
           return {
-                fullStream: (async function* () {
-                  throw {
-                    type: "error",
-                    sequence_number: 0,
-                    error: {
-                      type: "server_error",
-                      code: "server_error",
-                      message: "The server had an error processing your request.",
-                    },
-                  };
-                  yield undefined; // Satisfy require-yield ESLint rule
-                })(),
+            fullStream: (async function* (): AsyncGenerator<
+              { type: string; [key: string]: unknown },
+              void,
+              unknown
+            > {
+              throw {
+                type: "error",
+                sequence_number: 0,
+                error: {
+                  type: "server_error",
+                  code: "server_error",
+                  message: "The server had an error processing your request.",
+                },
+              };
+              // This yield is never reached, but required for generator signature.
+              yield { type: "error" };
+            })(),
             response: Promise.resolve({ messages: [] }),
             steps: Promise.resolve([]),
-          };
+          } as unknown as FakeStreamResult;
         }
 
         return {
