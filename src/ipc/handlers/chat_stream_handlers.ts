@@ -553,8 +553,9 @@ ${componentSnippet}
 
       // Use per-chat mode if set, otherwise fall back to current global setting
       // This respects the mode persisted to the chat record via selectChat
-      // Use the most recent user intent (settings) as the source of truth
-      const effectiveStreamMode = settings.selectedChatMode ?? updatedChat.chatMode;
+      // Use the most recent user intent (settings) as the fallback for legacy chats
+      const effectiveStreamMode =
+        updatedChat.chatMode ?? settings.selectedChatMode;
 
       // Only Dyad Pro requests have request ids.
       if (settings.enableDyadPro) {

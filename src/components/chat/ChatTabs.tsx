@@ -7,6 +7,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useChats } from "@/hooks/useChats";
 import { useLoadApps } from "@/hooks/useLoadApps";
 import { useSelectChat } from "@/hooks/useSelectChat";
+import { ipc } from "@/ipc/types";
 import {
   isStreamingByIdAtom,
   recentViewedChatIdsAtom,
@@ -373,7 +374,7 @@ export function ChatTabs({ selectedChatId }: ChatTabsProps) {
     visibleTabCount,
   ]);
 
-  const handleTabClick = (chat: ChatSummary, fromOverflow = false) => {
+  const handleTabClick = async (chat: ChatSummary, fromOverflow = false) => {
     if (fromOverflow) {
       const nextIds = applySelectionToOrderedChatIds(
         orderedChatIds,
@@ -387,11 +388,23 @@ export function ChatTabs({ selectedChatId }: ChatTabsProps) {
 
     clearNotification(chat.id);
 
+    let selectedMode: "ask" | "build" | "local-agent" | "plan" | null =
+      chat.chatMode;
+    if (!selectedMode) {
+      try {
+        const fullChat = await ipc.chat.getChat(chat.id);
+        selectedMode = fullChat.chatMode ?? null;
+      } catch {
+        // If fetch fails, keep whatever state is currently selected
+        selectedMode = null;
+      }
+    }
+
     selectChat({
       chatId: chat.id,
       appId: chat.appId,
       preserveTabOrder: true,
-      chatMode: chat.chatMode || undefined,
+      chatMode: selectedMode ?? undefined,
     });
   };
 

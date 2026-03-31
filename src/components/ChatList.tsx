@@ -110,9 +110,12 @@ export function ChatList({ show }: { show?: boolean }) {
     // Only create a new chat if an app is selected
     if (selectedAppId) {
       try {
-        // Only set initial mode if we have complete information
-        let effectiveDefaultMode: ChatMode | undefined;
-        if (!isQuotaLoading && settings) {
+        // Derive initial chat mode from current user-selected mode first
+        // (prevents sidebar new-chat from falling back to build defaults)
+        let effectiveDefaultMode: ChatMode | undefined =
+          settings?.selectedChatMode ?? undefined;
+
+        if (!effectiveDefaultMode && !isQuotaLoading && settings) {
           const freeAgentQuotaAvailable = !isQuotaExceeded;
           effectiveDefaultMode = getEffectiveDefaultChatMode(
             settings,
@@ -120,7 +123,6 @@ export function ChatList({ show }: { show?: boolean }) {
             freeAgentQuotaAvailable,
           );
         }
-        // If quotaLoading or settings not loaded, mode stays undefined
 
         // Create a new chat with the initial mode persisted to the database
         const chatId = await ipc.chat.createChat({
