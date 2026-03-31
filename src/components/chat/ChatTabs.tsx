@@ -267,6 +267,8 @@ export function ChatTabs({ selectedChatId }: ChatTabsProps) {
     [overflowTabs],
   );
 
+  const tabClickVersionRef = useRef(0);
+
   // Re-run when orderedChats becomes non-empty so the ResizeObserver attaches
   // after the container div renders (it returns null when there are no chats).
   const hasChats = orderedChats.length > 0;
@@ -374,7 +376,7 @@ export function ChatTabs({ selectedChatId }: ChatTabsProps) {
     visibleTabCount,
   ]);
 
-  const handleTabClick = async (chat: ChatSummary, fromOverflow = false) => {
+  const handleTabClick = (chat: ChatSummary, fromOverflow = false) => {
     if (fromOverflow) {
       const nextIds = applySelectionToOrderedChatIds(
         orderedChatIds,
@@ -388,17 +390,10 @@ export function ChatTabs({ selectedChatId }: ChatTabsProps) {
 
     clearNotification(chat.id);
 
-    let selectedMode: "ask" | "build" | "local-agent" | "plan" | null =
-      chat.chatMode;
-    if (!selectedMode) {
-      try {
-        const fullChat = await ipc.chat.getChat(chat.id);
-        selectedMode = fullChat.chatMode ?? null;
-      } catch {
-        // If fetch fails, keep whatever state is currently selected
-        selectedMode = null;
-      }
-    }
+    const clickVersion = ++tabClickVersionRef.current;
+
+    const selectedMode: "ask" | "build" | "local-agent" | "plan" | null =
+      chat.chatMode ?? null;
 
     selectChat({
       chatId: chat.id,
@@ -406,6 +401,27 @@ export function ChatTabs({ selectedChatId }: ChatTabsProps) {
       preserveTabOrder: true,
       chatMode: selectedMode ?? undefined,
     });
+
+    if (selectedMode === null) {
+      // Fetch per-chat mode in background and re-apply only if this is still the latest click.
+      ipc.chat
+        .getChat(chat.id)
+        .then((fullChat) => {
+          if (clickVersion !== tabClickVersionRef.current) return;
+          const refreshedMode = fullChat.chatMode ?? undefined;
+          if (refreshedMode && refreshedMode !== selectedMode) {
+            selectChat({
+              chatId: chat.id,
+              appId: chat.appId,
+              preserveTabOrder: true,
+              chatMode: refreshedMode,
+            });
+          }
+        })
+        .catch(() => {
+          // Ignore fetch failures; keep the current mode.
+        });
+    }
   };
 
   const handleCloseTab = (chatId: number) => {
