@@ -407,7 +407,11 @@ export function ChatTabs({ selectedChatId }: ChatTabsProps) {
       ipc.chat
         .getChat(chat.id)
         .then((fullChat) => {
-          if (clickVersion !== tabClickVersionRef.current) return;
+          if (
+            clickVersion !== tabClickVersionRef.current ||
+            selectedChatId !== chat.id
+          )
+            return;
           const refreshedMode = fullChat.chatMode ?? undefined;
           if (refreshedMode && refreshedMode !== selectedMode) {
             selectChat({

@@ -584,6 +584,17 @@ ${componentSnippet}
         orderBy: (messages, { asc }) => [asc(messages.createdAt)],
       });
 
+      // Re-fetch the chat record to include the placeholder in updatedChat
+      const updatedChatWithPlaceholder = await db.query.chats.findFirst({
+        where: eq(chats.id, req.chatId),
+        with: {
+          messages: {
+            orderBy: (messages, { asc }) => [asc(messages.createdAt)],
+          },
+          app: true,
+        },
+      });
+
       // Send the messages right away so that the loading state is shown for the message.
       // Now includes the placeholder assistant message so the stream anchor is visible.
       safeSend(event.sender, "chat:response:chunk", {
@@ -600,12 +611,13 @@ ${componentSnippet}
 
       if (testResponse) {
         // For test prompts, use the dedicated function
+        // Use the updated chat data including the placeholder message for consistency.
         fullResponse = await streamTestResponse(
           event,
           req.chatId,
           testResponse,
           abortController,
-          updatedChat,
+          updatedChatWithPlaceholder ?? updatedChat,
         );
       } else {
         // Normal AI processing for non-test prompts
