@@ -51,6 +51,7 @@ export function ChatPanel({
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const settingsRef = useRef(settings);
 
   // Tracks whether the user is at the bottom of the scroll container.
   // Uses a ref so followOutput can read it without stale closures,
@@ -133,6 +134,11 @@ export function ChatPanel({
     fetchChatMessages();
   }, [fetchChatMessages]);
 
+  // Keep settingsRef in sync with the latest settings value
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+
   // Synchronize chat's persisted mode on chat switch (not on every mode change)
   // This avoids a race condition where mode changes trigger fetchChatMessages
   // before updateChatMode completes, reading stale DB values
@@ -148,11 +154,12 @@ export function ChatPanel({
       const thisRequestChatId = chatId;
       const chat = await ipc.chat.getChat(thisRequestChatId);
       // Guard against stale responses from slower chat fetches on previous tabs
+      // Use settingsRef.current to read latest settings at comparison time, not stale closure value
       if (
         isMounted &&
         latestChatIdRef.current === thisRequestChatId &&
         chat.chatMode &&
-        settings?.selectedChatMode !== chat.chatMode
+        settingsRef.current?.selectedChatMode !== chat.chatMode
       ) {
         updateSettings({ selectedChatMode: chat.chatMode });
       }

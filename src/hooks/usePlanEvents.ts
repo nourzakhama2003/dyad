@@ -148,7 +148,7 @@ export function usePlanEvents() {
         try {
           const newChatId = await ipc.chat.createChat({
             appId: selectedAppIdRef.current,
-            initialChatMode: settingsRef.current?.selectedChatMode,
+            initialChatMode: "local-agent",
           });
 
           // Navigate to the new chat

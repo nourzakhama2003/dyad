@@ -820,7 +820,10 @@ export const SecurityPanel = () => {
       const key = createFindingKey(finding);
       setFixingFindingKey(key);
 
-      const chatId = await ipc.chat.createChat(selectedAppId);
+      const chatId = await ipc.chat.createChat({
+        appId: selectedAppId,
+        initialChatMode: settings?.selectedChatMode,
+      });
 
       // Navigate to the new chat
       setSelectedChatId(chatId);
