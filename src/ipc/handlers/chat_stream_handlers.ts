@@ -555,11 +555,14 @@ ${componentSnippet}
         );
       }
 
-      // Use per-chat mode if set, otherwise fall back to current global setting
-      // This respects the mode persisted to the chat record via selectChat
-      // Use the most recent user intent (settings) as the fallback for legacy chats
-      const effectiveStreamMode =
-        updatedChat.chatMode ?? settings.selectedChatMode;
+      // Use global selected mode first, otherwise fall back to per-chat mode.
+      const effectiveStreamMode:
+        | "ask"
+        | "build"
+        | "local-agent"
+        | "plan"
+        | undefined =
+        settings.selectedChatMode ?? updatedChat.chatMode ?? undefined;
 
       // Only Dyad Pro requests have request ids.
       if (settings.enableDyadPro) {
