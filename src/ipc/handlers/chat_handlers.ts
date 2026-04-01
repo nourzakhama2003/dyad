@@ -9,6 +9,7 @@ import { getDyadAppPath } from "../../paths/paths";
 import { getCurrentCommitHash } from "../utils/git_utils";
 import { createTypedHandler } from "./base";
 import { chatContracts } from "../types/chat";
+import { readSettings } from "../../main/settings";
 
 const logger = log.scope("chat_handlers");
 
@@ -17,11 +18,14 @@ export function registerChatHandlers() {
     // Handle both old format (just appId) and new format (object with appId and initialChatMode)
     let appId: number;
     let initialChatMode: "ask" | "build" | "local-agent" | "plan" | undefined;
+    const settings = readSettings();
+
     if (typeof input === "number") {
       appId = input;
+      initialChatMode = settings.selectedChatMode;
     } else {
       appId = input.appId;
-      initialChatMode = input.initialChatMode;
+      initialChatMode = input.initialChatMode ?? settings.selectedChatMode;
     }
 
     // Get the app's path first
@@ -48,13 +52,13 @@ export function registerChatHandlers() {
     }
 
     // Create a new chat with the initial chat mode
+    const modeToPersist = initialChatMode ?? null;
     const [chat] = await db
       .insert(chats)
       .values({
         appId,
         initialCommitHash,
-        // Save the chat mode provided during creation (null/default for backward compatibility)
-        ...(initialChatMode && { chatMode: initialChatMode }),
+        chatMode: modeToPersist,
       })
       .returning();
     logger.info(
