@@ -84,7 +84,7 @@ export function ChatPanel({
 
   // Track previous chatId to detect chat switches
   const prevChatIdRef = useRef<number | undefined>(undefined);
-  // Ref to track the latest chatId for async staleness guard
+
   const latestChatIdRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
@@ -162,11 +162,9 @@ export function ChatPanel({
     return () => {
       isMounted = false;
     };
-  }, [chatId]);
+  }, [chatId, settings?.selectedChatMode, updateSettings]);
 
   const isStreaming = chatId ? (isStreamingById.get(chatId) ?? false) : false;
-
-  // Scroll to bottom when streaming completes to ensure footer content is visible,
   // but only if the user was following (at bottom) during the stream.
   useEffect(() => {
     const wasStreaming = prevIsStreamingRef.current;
