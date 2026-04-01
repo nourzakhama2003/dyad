@@ -94,14 +94,16 @@ export function ChatHeader({
   const handleNewChat = async () => {
     if (appId) {
       try {
-        // Only set initial mode if we have complete information
+        // Derive initial chat mode from currently selected user mode first
         let initialChatMode:
           | undefined
           | "ask"
           | "build"
           | "local-agent"
           | "plan";
-        if (!quotaLoading && settings) {
+        initialChatMode = settings?.selectedChatMode ?? undefined;
+
+        if (!initialChatMode && !quotaLoading && settings) {
           const freeAgentQuotaAvailable = !isQuotaExceeded;
           initialChatMode = getEffectiveDefaultChatMode(
             settings,
@@ -109,7 +111,7 @@ export function ChatHeader({
             freeAgentQuotaAvailable,
           );
         }
-        // If quotaLoading is true or settings not loaded, initialChatMode stays undefined(server will use global default)
+        // If quotaLoading is true or settings not loaded, initialChatMode stays undefined (server will use global default)
 
         const chatId = await ipc.chat.createChat({
           appId,
