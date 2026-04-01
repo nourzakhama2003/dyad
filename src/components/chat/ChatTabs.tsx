@@ -197,6 +197,7 @@ export function ChatTabs({ selectedChatId }: ChatTabsProps) {
   const recentViewedChatIds = useAtomValue(recentViewedChatIdsAtom);
   const closedChatIds = useAtomValue(closedChatIdsAtom);
   const sessionOpenedChatIds = useAtomValue(sessionOpenedChatIdsAtom);
+  const currentSelectedChatId = useAtomValue(selectedChatIdAtom);
   const setRecentViewedChatIds = useSetAtom(setRecentViewedChatIdsAtom);
   const removeRecentViewedChatId = useSetAtom(removeRecentViewedChatIdAtom);
   const pushRecentViewedChatId = useSetAtom(pushRecentViewedChatIdAtom);
@@ -403,11 +404,17 @@ export function ChatTabs({ selectedChatId }: ChatTabsProps) {
     });
 
     if (selectedMode === null) {
-      // Fetch per-chat mode in background and re-apply only if this is still the latest click.
+      // Fetch per-chat mode in background and re-apply only if this is still the latest click
+      // and the same chat is still selected (prevents non-click-based selection changes from
+      // racing in and re-selecting stale chat).
       ipc.chat
         .getChat(chat.id)
         .then((fullChat) => {
-          if (clickVersion !== tabClickVersionRef.current) return;
+          if (
+            clickVersion !== tabClickVersionRef.current ||
+            currentSelectedChatId !== chat.id
+          )
+            return;
           const refreshedMode = fullChat.chatMode ?? undefined;
           if (refreshedMode && refreshedMode !== selectedMode) {
             selectChat({
