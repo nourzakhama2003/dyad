@@ -1,5 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useAtomValue } from "jotai";
+import { useCallback } from "react";
 import { selectedChatIdAtom } from "@/atoms/chatAtoms";
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { useStreamChat } from "@/hooks/useStreamChat";
@@ -15,7 +16,7 @@ export function useSummarizeInNewChat() {
 
   const { settings } = useSettings();
 
-  const handleSummarize = async () => {
+  const handleSummarize = useCallback(async () => {
     if (!appId) {
       console.error("No app id found");
       return;
@@ -38,7 +39,7 @@ export function useSummarizeInNewChat() {
     } catch (err) {
       showError(err);
     }
-  };
+  }, [appId, chatId, navigate, settings, streamMessage]);
 
   return { handleSummarize };
 }
