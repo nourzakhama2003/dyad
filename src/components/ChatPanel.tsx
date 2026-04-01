@@ -162,7 +162,7 @@ export function ChatPanel({
     return () => {
       isMounted = false;
     };
-  }, [chatId, settings?.selectedChatMode, updateSettings]);
+  }, [chatId, updateSettings]);
 
   const isStreaming = chatId ? (isStreamingById.get(chatId) ?? false) : false;
   // but only if the user was following (at bottom) during the stream.

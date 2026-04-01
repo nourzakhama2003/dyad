@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useSetAtom } from "jotai";
 import { useNavigate } from "@tanstack/react-router";
+import { useSettings } from "@/hooks/useSettings";
 import { ipc } from "@/ipc/types";
 import {
   selectedChatIdAtom,
@@ -38,6 +39,7 @@ export function useResolveMergeConflictsWithAI({
   const isResolvingRef = useRef(false);
   const { invalidateChats } = useChats(appId);
   const { refreshApp } = useLoadApp(appId);
+  const { settings } = useSettings();
 
   const resolveWithAI = useCallback(async () => {
     if (!appId) {
@@ -58,7 +60,10 @@ export function useResolveMergeConflictsWithAI({
     let chatId: number | null = null;
     try {
       // Create a new chat for conflict resolution
-      const newChatId = await ipc.chat.createChat(appId);
+      const newChatId = await ipc.chat.createChat({
+        appId,
+        initialChatMode: settings?.selectedChatMode,
+      });
       chatId = newChatId;
 
       // Clear conflicts state after successful chat creation

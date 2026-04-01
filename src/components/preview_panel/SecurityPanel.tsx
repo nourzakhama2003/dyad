@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useStreamChat } from "@/hooks/useStreamChat";
+import { useSettings } from "@/hooks/useSettings";
 import { showError } from "@/lib/toast";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -768,6 +769,8 @@ export const SecurityPanel = () => {
     }
   };
 
+  const { settings } = useSettings();
+
   const openFindingDetails = (finding: SecurityFinding) => {
     setDetailsFinding(finding);
     setDetailsOpen(true);
@@ -782,8 +785,11 @@ export const SecurityPanel = () => {
     try {
       setIsRunningReview(true);
 
-      // Create a new chat
-      const chatId = await ipc.chat.createChat(selectedAppId);
+      // Create a new chat with explicit mode from current settings
+      const chatId = await ipc.chat.createChat({
+        appId: selectedAppId,
+        initialChatMode: settings?.selectedChatMode,
+      });
 
       // Navigate to the new chat
       setSelectedChatId(chatId);
@@ -882,8 +888,11 @@ ${finding.description}`;
         selectedFindings.has(createFindingKey(finding)),
       );
 
-      // Create a new chat
-      const chatId = await ipc.chat.createChat(selectedAppId);
+      // Create a new chat with explicit mode from current settings
+      const chatId = await ipc.chat.createChat({
+        appId: selectedAppId,
+        initialChatMode: settings?.selectedChatMode,
+      });
 
       // Navigate to the new chat
       setSelectedChatId(chatId);
