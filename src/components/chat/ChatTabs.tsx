@@ -198,6 +198,7 @@ export function ChatTabs({ selectedChatId }: ChatTabsProps) {
   const closedChatIds = useAtomValue(closedChatIdsAtom);
   const sessionOpenedChatIds = useAtomValue(sessionOpenedChatIdsAtom);
   const currentSelectedChatId = useAtomValue(selectedChatIdAtom);
+  const selectedChatIdRef = useRef<number | null>(null);
   const setRecentViewedChatIds = useSetAtom(setRecentViewedChatIdsAtom);
   const removeRecentViewedChatId = useSetAtom(removeRecentViewedChatIdAtom);
   const pushRecentViewedChatId = useSetAtom(pushRecentViewedChatIdAtom);
@@ -213,6 +214,10 @@ export function ChatTabs({ selectedChatId }: ChatTabsProps) {
     new Set(),
   );
   const prevStreamingRef = useRef<Map<number, boolean>>(new Map());
+
+  useEffect(() => {
+    selectedChatIdRef.current = currentSelectedChatId;
+  }, [currentSelectedChatId]);
 
   const chatsById = useMemo(
     () => new Map(chats.map((chat) => [chat.id, chat])),
@@ -412,7 +417,7 @@ export function ChatTabs({ selectedChatId }: ChatTabsProps) {
         .then((fullChat) => {
           if (
             clickVersion !== tabClickVersionRef.current ||
-            currentSelectedChatId !== chat.id
+            selectedChatIdRef.current !== chat.id
           )
             return;
           const refreshedMode = fullChat.chatMode ?? undefined;
