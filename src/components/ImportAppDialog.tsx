@@ -20,6 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "@tanstack/react-router";
 import { useStreamChat } from "@/hooks/useStreamChat";
+import { useSettings } from "@/hooks/useSettings";
 import type { GithubRepository } from "@/ipc/types";
 import { useGithubRepos } from "@/hooks/useGithubRepos";
 
@@ -33,7 +34,6 @@ import {
   AccordionTrigger,
 } from "./ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSettings } from "@/hooks/useSettings";
 import { UnconnectedGitHubConnector } from "@/components/GitHubConnector";
 
 interface ImportAppDialogProps {
@@ -106,6 +106,7 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
     const match = url.match(/github\.com[:/]([^/]+)\/([^/]+?)(?:\.git)?\/?$/);
     return match ? match[2] : null;
   };
+
   const handleImportFromUrl = async () => {
     setImporting(true);
     try {
@@ -125,7 +126,10 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
       }
       setSelectedAppId(result.app.id);
       showSuccess(t("home:successfullyImported", { name: result.app.name }));
-      const chatId = await ipc.chat.createChat(result.app.id);
+      const chatId = await ipc.chat.createChat({
+        appId: result.app.id,
+        initialChatMode: settings?.selectedChatMode,
+      });
       navigate({ to: "/chat", search: { id: chatId } });
       if (!result.hasAiRules) {
         streamMessage({
@@ -161,7 +165,10 @@ export function ImportAppDialog({ isOpen, onClose }: ImportAppDialogProps) {
       }
       setSelectedAppId(result.app.id);
       showSuccess(t("home:successfullyImported", { name: result.app.name }));
-      const chatId = await ipc.chat.createChat(result.app.id);
+      const chatId = await ipc.chat.createChat({
+        appId: result.app.id,
+        initialChatMode: settings?.selectedChatMode,
+      });
       navigate({ to: "/chat", search: { id: chatId } });
       if (!result.hasAiRules) {
         streamMessage({

@@ -146,7 +146,10 @@ export function usePlanEvents() {
         }
 
         try {
-          const newChatId = await ipc.chat.createChat(selectedAppIdRef.current);
+          const newChatId = await ipc.chat.createChat({
+            appId: selectedAppIdRef.current,
+            initialChatMode: settingsRef.current?.selectedChatMode,
+          });
 
           // Navigate to the new chat
           setSelectedChatId(newChatId);
