@@ -139,38 +139,6 @@ export function ChatPanel({
     settingsRef.current = settings;
   }, [settings]);
 
-  // Synchronize chat's persisted mode on chat switch (not on every mode change)
-  // This avoids a race condition where mode changes trigger fetchChatMessages
-  // before updateChatMode completes, reading stale DB values
-  useEffect(() => {
-    if (!chatId) {
-      return;
-    }
-
-    latestChatIdRef.current = chatId;
-
-    let isMounted = true;
-    const syncChatMode = async () => {
-      const thisRequestChatId = chatId;
-      const chat = await ipc.chat.getChat(thisRequestChatId);
-      // Guard against stale responses from slower chat fetches on previous tabs
-      // Use settingsRef.current to read latest settings at comparison time, not stale closure value
-      if (
-        isMounted &&
-        latestChatIdRef.current === thisRequestChatId &&
-        chat.chatMode &&
-        settingsRef.current?.selectedChatMode !== chat.chatMode
-      ) {
-        updateSettings({ selectedChatMode: chat.chatMode });
-      }
-    };
-
-    syncChatMode();
-    return () => {
-      isMounted = false;
-    };
-  }, [chatId, updateSettings]);
-
   const isStreaming = chatId ? (isStreamingById.get(chatId) ?? false) : false;
   // but only if the user was following (at bottom) during the stream.
   useEffect(() => {

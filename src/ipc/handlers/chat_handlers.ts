@@ -15,18 +15,10 @@ const logger = log.scope("chat_handlers");
 
 export function registerChatHandlers() {
   createTypedHandler(chatContracts.createChat, async (_, input) => {
-    // Handle both old format (just appId) and new format (object with appId and initialChatMode)
-    let appId: number;
-    let initialChatMode: "ask" | "build" | "local-agent" | "plan" | undefined;
     const settings = readSettings();
 
-    if (typeof input === "number") {
-      appId = input;
-      initialChatMode = settings.selectedChatMode;
-    } else {
-      appId = input.appId;
-      initialChatMode = input.initialChatMode ?? settings.selectedChatMode;
-    }
+    const appId = input.appId;
+    const initialChatMode = input.initialChatMode ?? settings.selectedChatMode;
 
     // Get the app's path first
     const app = await db.query.apps.findFirst({

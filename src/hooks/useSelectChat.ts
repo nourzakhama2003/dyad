@@ -54,15 +54,14 @@ export function useSelectChat() {
         search: { id: chatId },
       });
 
-      // Restore chat mode async in the background if provided
       if (chatMode) {
-        //  apply mode update if this is still the current selection (version matches)
-        updateSettings({ selectedChatMode: chatMode }).catch((error) => {
-          //  if this update was for the current selection version log the error, otherwise ignore since it's stale
-          if (updateVersion === currentModeUpdateVersionRef.current) {
-            logger.error("Error updating chat mode:", error);
-          }
-        });
+        if (updateVersion === currentModeUpdateVersionRef.current) {
+          updateSettings({ selectedChatMode: chatMode }).catch((error) => {
+            if (updateVersion === currentModeUpdateVersionRef.current) {
+              logger.error("Error updating chat mode:", error);
+            }
+          });
+        }
       }
 
       if (prefillInput !== undefined) {

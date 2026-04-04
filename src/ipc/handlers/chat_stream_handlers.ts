@@ -555,14 +555,13 @@ ${componentSnippet}
         );
       }
 
-      // Use global selected mode first, otherwise fall back to per-chat mode.
       const effectiveStreamMode:
         | "ask"
         | "build"
         | "local-agent"
         | "plan"
         | undefined =
-        settings.selectedChatMode ?? updatedChat.chatMode ?? undefined;
+        updatedChat.chatMode ?? settings.selectedChatMode ?? undefined;
 
       // Only Dyad Pro requests have request ids.
       if (settings.enableDyadPro) {

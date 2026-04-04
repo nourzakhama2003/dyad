@@ -204,17 +204,14 @@ export const chatContracts = {
 
   createChat: defineContract({
     channel: "create-chat",
-    input: z.union([
-      z.number(), // for Backward compatibility: just appId
-      z.object({
-        appId: z.number(),
-        // Initial chat mode to persist for this new chat
-        // Falls back to global default if not specified
-        initialChatMode: z
-          .enum(["ask", "build", "local-agent", "plan"])
-          .optional(),
-      }),
-    ]),
+    input: z.object({
+      appId: z.number(),
+      // Initial chat mode to persist for this new chat
+      // Falls back to global default if not specified
+      initialChatMode: z
+        .enum(["ask", "build", "local-agent", "plan"])
+        .optional(),
+    }),
     output: CreateChatResultSchema,
   }),
 

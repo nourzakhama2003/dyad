@@ -14,9 +14,7 @@ import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { dropdownOpenAtom } from "@/atoms/uiAtoms";
 import { ipc } from "@/ipc/types";
 import { showError, showSuccess } from "@/lib/toast";
-import { useSettings } from "@/hooks/useSettings";
-import { getEffectiveDefaultChatMode, type ChatMode } from "@/lib/schemas";
-import { useFreeAgentQuota } from "@/hooks/useFreeAgentQuota";
+import { useInitialChatMode } from "@/hooks/useInitialChatMode";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -44,8 +42,7 @@ export function ChatList({ show }: { show?: boolean }) {
   const [selectedChatId, setSelectedChatId] = useAtom(selectedChatIdAtom);
   const [selectedAppId] = useAtom(selectedAppIdAtom);
   const [, setIsDropdownOpen] = useAtom(dropdownOpenAtom);
-  const { settings, envVars } = useSettings();
-  const { isQuotaExceeded, isLoading: isQuotaLoading } = useFreeAgentQuota();
+  const initialChatMode = useInitialChatMode();
 
   const { chats, loading, invalidateChats } = useChats(selectedAppId);
   const routerState = useRouterState();
@@ -110,25 +107,11 @@ export function ChatList({ show }: { show?: boolean }) {
     // Only create a new chat if an app is selected
     if (selectedAppId) {
       try {
-        // Derive initial chat mode from current user-selected mode first
-        // (prevents sidebar new-chat from falling back to build defaults)
-        let effectiveDefaultMode: ChatMode | undefined =
-          settings?.selectedChatMode ?? undefined;
-
-        if (!effectiveDefaultMode && !isQuotaLoading && settings) {
-          const freeAgentQuotaAvailable = !isQuotaExceeded;
-          effectiveDefaultMode = getEffectiveDefaultChatMode(
-            settings,
-            envVars,
-            freeAgentQuotaAvailable,
-          );
-        }
-
         // Create a new chat with the initial mode persisted to the database
         const chatId = await ipc.chat.createChat({
           appId: selectedAppId,
-          ...(effectiveDefaultMode && {
-            initialChatMode: effectiveDefaultMode,
+          ...(initialChatMode && {
+            initialChatMode,
           }),
         });
 
@@ -140,7 +123,7 @@ export function ChatList({ show }: { show?: boolean }) {
         selectChat({
           chatId,
           appId: selectedAppId,
-          chatMode: effectiveDefaultMode,
+          chatMode: initialChatMode,
         });
       } catch (error) {
         // DO A TOAST
