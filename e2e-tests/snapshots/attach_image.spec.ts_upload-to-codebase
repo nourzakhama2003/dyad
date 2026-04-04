@@ -5,5 +5,5 @@ message: [[UPLOAD_IMAGE_TO_CODEBASE]]
 Attachments:
 
 
-File to upload to codebase: "logo.png" (path: C:\Users\LENOVO\AppData\Local\Temp\dyad-e2e-tests-1775313847207\dyad-apps\sincere-griffin-roam\.dyad\media\65df5b09833d4a7950af8987ff2aa730.png)
+File to upload to codebase: "logo.png" (path: [[MEDIA_PATH]])
 Use the copy_file tool (or <dyad-copy> tag) to copy this file into the codebase at the appropriate location.

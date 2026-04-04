@@ -407,6 +407,11 @@ export class PageObject {
       .replaceAll(
         /\.dyad\/chats\/\d+\/compaction-[^\s"\\]+\.md/g,
         "[[compaction-backup-path]]",
+      )
+      // Stabilize media paths attached in chat
+      .replaceAll(
+        /\(path: [^)]+\.dyad[\\\\/]+media[\\\\/]+[^)]+\)/g,
+        "(path: [[MEDIA_PATH]])",
       );
 
     // Perform snapshot comparison
