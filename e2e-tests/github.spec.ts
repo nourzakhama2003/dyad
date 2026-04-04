@@ -46,7 +46,7 @@ test("create and sync to new repo", async ({ po }) => {
   await po.githubConnector.snapshotConnectedRepo();
 
   // Sync: capture success message
-  await po.githubConnector.clickSyncToGithubButton();
+  await po.githubConnector.waitForAutoSync();
 
   await po.githubConnector.snapshotConnectedRepo();
   // Verify the push was received for the default branch (main)
@@ -70,8 +70,8 @@ test("create and sync to new repo - custom branch", async ({ po }) => {
   // Click create repo button
   await po.githubConnector.clickCreateRepoButton();
 
-  // Sync to GitHub
-  await po.githubConnector.clickSyncToGithubButton();
+  // Sync to GitHub happens automatically
+  await po.githubConnector.waitForAutoSync();
 
   // Snapshot post-creation state
   await po.githubConnector.snapshotConnectedRepo();
@@ -107,8 +107,8 @@ test("create repo with spaces in name - should normalize to hyphens", async ({
   // Verify the connected repo shows the normalized name (with hyphens, not spaces)
   await expect(po.page.locator("text=testuser/my-new-repo")).toBeVisible();
 
-  // Sync to GitHub
-  await po.githubConnector.clickSyncToGithubButton();
+  // Sync to GitHub happens automatically
+  await po.githubConnector.waitForAutoSync();
 
   // Verify the push was received with the normalized repo name
   await po.githubConnector.verifyPushEvent({
@@ -167,8 +167,8 @@ test("create and sync to existing repo - custom branch", async ({ po }) => {
   await po.githubConnector.selectCustomBranch("new-branch");
   await po.githubConnector.clickConnectToRepoButton();
 
-  // Sync to GitHub to trigger a push
-  await po.githubConnector.clickSyncToGithubButton();
+  // Sync to GitHub happens automatically
+  await po.githubConnector.waitForAutoSync();
   await po.githubConnector.snapshotConnectedRepo();
   // Verify the push was received for the correct custom branch
   await po.githubConnector.verifyPushEvent({

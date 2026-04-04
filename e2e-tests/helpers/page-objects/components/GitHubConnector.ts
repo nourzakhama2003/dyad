@@ -4,6 +4,7 @@
  */
 
 import { Page, expect } from "@playwright/test";
+import { Timeout } from "../../constants";
 
 export class GitHubConnector {
   constructor(
@@ -82,9 +83,13 @@ export class GitHubConnector {
 
   async clickSyncToGithubButton() {
     await this.page.getByRole("button", { name: "Sync to GitHub" }).click();
+    await this.waitForAutoSync();
+  }
+
+  async waitForAutoSync() {
     await expect(
       this.page.getByText(/Successfully pushed to GitHub!/, { exact: false }),
-    ).toBeVisible({ timeout: 15000 });
+    ).toBeVisible({ timeout: Timeout.LONG });
   }
 
   async clickDisconnectRepoButton() {

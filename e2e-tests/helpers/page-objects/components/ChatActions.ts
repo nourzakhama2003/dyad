@@ -58,7 +58,7 @@ export class ChatActions {
   }
 
   private getRetryButton() {
-    return this.page.getByRole("button", { name: "Retry" });
+    return this.page.getByRole("button", { name: "Retry" }).last();
   }
 
   private getUndoButton() {
@@ -82,9 +82,11 @@ export class ChatActions {
       // Alternative: check if messages exist and send button is enabled
       const messagesList = this.page.getByTestId("messages-list");
       const messagesExist = await messagesList.isVisible().catch(() => false);
-      const sendButton = this.page.getByRole("button", {
-        name: "Send message",
-      });
+      const sendButton = this.page
+        .getByRole("button", {
+          name: "Send message",
+        })
+        .last();
       const sendEnabled = await sendButton.isEnabled().catch(() => false);
 
       if (messagesExist && sendEnabled) return; // Success: messages + enabled input

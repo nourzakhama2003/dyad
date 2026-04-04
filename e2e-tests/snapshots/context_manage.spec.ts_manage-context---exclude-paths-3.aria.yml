@@ -6,14 +6,7 @@
       - img
   - textbox "src/**/*.tsx"
   - button "Add"
-  - button "src/**/*.ts"
-  - text: /4 files, ~\d+ tokens/
-  - button:
-    - img
-  - button "manual/**"
-  - text: /3 files, ~\d+ tokens/
-  - button:
-    - img
+  - paragraph: Dyad will use the entire codebase as context.
   - heading "Exclude Paths" [level=3]
   - paragraph:
     - text: These files will be excluded from the context.
@@ -21,13 +14,10 @@
       - img
   - textbox "node_modules/**/*"
   - button "Add"
-  - button "manual/exclude/**"
-  - text: 0 files, ~0 tokens
-  - button:
-    - img
   - button "src/**"
   - text: /7 files, ~\d+ tokens/
   - button:
     - img
   - button "Close":
     - img
+    - text: ""
