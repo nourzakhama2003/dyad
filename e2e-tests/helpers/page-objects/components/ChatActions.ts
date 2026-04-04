@@ -68,9 +68,29 @@ export class ChatActions {
   async waitForChatCompletion({
     timeout = Timeout.MEDIUM,
   }: { timeout?: number } = {}) {
-    await expect(this.getRetryButton()).toBeVisible({
-      timeout,
-    });
+    // Wait for either:
+    // 1. Retry button to appear (normal streaming completion), OR
+    // 2. Messages to be present and input to be enabled again (for [dump] commands)
+    // This is resilient to [dump] local-agent commands which may not show Retry button
+    await expect(async () => {
+      const retryVisible = await this.getRetryButton()
+        .isVisible()
+        .catch(() => false);
+
+      if (retryVisible) return; // Success: Retry button appeared
+
+      // Alternative: check if messages exist and send button is enabled
+      const messagesList = this.page.getByTestId("messages-list");
+      const messagesExist = await messagesList.isVisible().catch(() => false);
+      const sendButton = this.page.getByRole("button", {
+        name: "Send message",
+      });
+      const sendEnabled = await sendButton.isEnabled().catch(() => false);
+
+      if (messagesExist && sendEnabled) return; // Success: messages + enabled input
+
+      throw new Error("Chat not yet complete");
+    }).toPass({ timeout });
   }
 
   async clickRetry() {
