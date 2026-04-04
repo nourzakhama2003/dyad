@@ -95,6 +95,13 @@ export const test = base.extend<{
       if (!electronConfig.showSetupScreen) {
         // This is just a hack to avoid the AI setup screen.
         process.env.OPENAI_API_KEY = "sk-test";
+      } else {
+        // Explicitly clear keys so the setup screen strictly detects no provider
+        delete process.env.OPENAI_API_KEY;
+        delete process.env.ANTHROPIC_API_KEY;
+        delete process.env.GEMINI_API_KEY;
+        delete process.env.OPENROUTER_API_KEY;
+        delete process.env.DYAD_PRO_API_KEY;
       }
       const baseTmpDir = os.tmpdir();
       const userDataDir = path.join(baseTmpDir, `dyad-e2e-tests-${Date.now()}`);

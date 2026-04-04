@@ -82,6 +82,9 @@ export class GitHubConnector {
 
   async clickSyncToGithubButton() {
     await this.page.getByRole("button", { name: "Sync to GitHub" }).click();
+    await expect(
+      this.page.getByText(/Successfully pushed to GitHub!/, { exact: false }),
+    ).toBeVisible({ timeout: 15000 });
   }
 
   async clickDisconnectRepoButton() {
