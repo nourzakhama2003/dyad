@@ -112,6 +112,13 @@ export class ChatActions {
     await this.dismissFloatingOverlays();
     const selector = this.page.getByTestId("chat-mode-selector");
     await expect(selector).toBeVisible({ timeout: Timeout.MEDIUM });
+
+    // Wait for selector to be enabled (not disabled) before clicking
+    await expect(async () => {
+      const isDisabled = await selector.isDisabled();
+      expect(isDisabled).toBe(false);
+    }).toPass({ timeout: Timeout.MEDIUM });
+
     await selector.click({ force: true });
     const mapping: Record<string, RegExp> = {
       build: /^Build/,

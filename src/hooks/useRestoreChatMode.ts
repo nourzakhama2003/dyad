@@ -27,6 +27,8 @@ type UseRestoreChatModeOptions = {
   ) => Promise<UserSettings | undefined>;
 };
 
+//This hook restores and validates a chat’s mode on load and  syncing it with settings
+
 export function useRestoreChatMode({
   chatId,
   appId,
@@ -39,11 +41,8 @@ export function useRestoreChatMode({
   const queryClient = useQueryClient();
   const { persistChatMode } = usePersistChatMode();
   const [isRestoringMode, setIsRestoringMode] = useState(false);
-
-  // Use a ref to track the last chat restored to avoid duplicate restores
   const lastRestoredChatIdRef = useRef<number | undefined>(undefined);
-
-  // Use refs for settings/envVars to avoid effect re-runs on object reference changes
+  const lastRestoredQuotaExceededRef = useRef<boolean>(false);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
   const envVarsRef = useRef(envVars);
@@ -53,9 +52,10 @@ export function useRestoreChatMode({
     if (!chatId || !settingsRef.current) {
       return;
     }
-
-    // already restored this chat, skip.
-    if (lastRestoredChatIdRef.current === chatId) {
+    if (
+      lastRestoredChatIdRef.current === chatId &&
+      lastRestoredQuotaExceededRef.current === isQuotaExceeded
+    ) {
       return;
     }
 
@@ -95,7 +95,7 @@ export function useRestoreChatMode({
         );
         setIsRestoringMode(false);
       }
-    }, 3_000);
+    }, 3000);
 
     const clearRestoreTimeout = () => {
       window.clearTimeout(restoreTimeout);
@@ -124,7 +124,6 @@ export function useRestoreChatMode({
         return;
       }
 
-      // Validate fallbackMode before passing to resolveAllowedChatMode
       let fallbackMode = snapshottedSettings.selectedChatMode ?? "build";
       if (
         !isChatModeAllowed(
@@ -175,13 +174,15 @@ export function useRestoreChatMode({
           { id: `restore-fallback-${chatId}` },
         );
 
-        // Skip persist if appId is not available (no chat has appId=0)
         if (!appId) {
           console.warn(
             `Skipping chat mode persist for chat ${chatId}: appId not available`,
           );
-          // Still apply the resolved mode to settings even without DB persistence
+
           shouldUpdateSelectedChatMode = true;
+          if (!isCancelled) {
+            setIsRestoringMode(false);
+          }
         } else {
           await persistChatMode({
             chatId,
@@ -204,8 +205,6 @@ export function useRestoreChatMode({
           if (!isCancelled) {
             setIsRestoringMode(false);
           }
-
-          // persistChatMode with optimistic=false already updates settings internally
         }
       } else if (!isCancelled && !restoreAbortController.signal.aborted) {
         shouldUpdateSelectedChatMode = true;
@@ -234,6 +233,9 @@ export function useRestoreChatMode({
 
         if (cachedChat) {
           await applyResolvedMode(cachedChat.chatMode ?? null);
+
+          lastRestoredChatIdRef.current = chatId;
+          lastRestoredQuotaExceededRef.current = isQuotaExceeded;
           return;
         }
 
@@ -246,6 +248,9 @@ export function useRestoreChatMode({
         }
 
         await applyResolvedMode(chat.chatMode ?? null);
+
+        lastRestoredChatIdRef.current = chatId;
+        lastRestoredQuotaExceededRef.current = isQuotaExceeded;
       } catch (err) {
         console.error("Failed to restore chat mode on deep-link:", err);
         if (!isCancelled) {

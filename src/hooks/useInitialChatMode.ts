@@ -15,7 +15,7 @@ export function useInitialChatMode(): ChatMode | undefined {
     return undefined;
   }
 
-  // For non-Pro users, wait until quota status is known before calculating mode.
+  // For non-Pro users wait until quota status is known before calculating mode.
   const isPro = isDyadProEnabled(settings);
   if (!isPro && isQuotaLoading) {
     return undefined;

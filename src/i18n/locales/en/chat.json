@@ -143,10 +143,6 @@
     "openMenu": "Open mode menu",
     "toggleShortcut": "{{modeDescription}} ({{shortcut}} to toggle)",
     "noAppSelected": "No app selected — can't change chat mode",
-    "switchToBuildPersistFailed": "Could not save Build mode for this chat. You can retry.",
-    "switchToBuildPersistFailedFinal": "Could not save Build mode for this chat. Please try again later.",
-    "chatModeLoading": "Chat mode is still loading. Please try again.",
-    "retry": "Retry",
     "restoringChatMode": "Restoring chat mode...",
     "restoreModeTimedOut": "Couldn't restore this chat's mode in time - using {{mode}}. Switch manually from the mode selector if needed.",
     "agentV2": "Agent v2",
@@ -181,9 +177,7 @@
     "agentUnavailableProvider": "Agent mode requires an OpenAI or Anthropic provider",
     "modeUnavailableFallback": "{{mode}} mode unavailable — this chat was switched to {{fallbackMode}}",
     "agentFallbackSwitched": "Agent mode unavailable — switched to {{mode}}",
-    "persistFailed": "Failed to save chat mode to database",
-    "persistFailedWithMode": "Couldn't switch to {{attempted}} — staying on {{current}}",
-    "planAgentUnavailable": "Agent mode is unavailable for plan implementation. Please enable an eligible mode and try again."
+    "persistFailed": "Failed to save chat mode to database"
   },
   "modelPicker": {
     "modelLabel": "Model:",

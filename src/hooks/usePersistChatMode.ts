@@ -52,16 +52,17 @@ export function usePersistChatMode() {
       } = options;
 
       const persistInternal = async (): Promise<PersistChatModeResult> => {
-        // Read refs at execution time, not at enqueue time
+        //this to avoid stale data get fresh every rerender
         const currentUpdateSettings = updateSettingsRef.current;
 
-        // Capture previous mode before optimistic update for correct rollback
+        //  previous mode  for  rollback
         const previousMode =
           settingsRef.current?.selectedChatMode ??
           initialChatModeRef.current ??
           "build";
 
         try {
+          //optimistic for immediate ui update if enabled(without waiting persitence to complete)
           if (optimistic) {
             await currentUpdateSettings({ selectedChatMode: chatMode });
           }
@@ -70,7 +71,7 @@ export function usePersistChatMode() {
             await currentUpdateSettings({ selectedChatMode: chatMode });
           }
 
-          // Call onPersistSuccess in separate try/catch so callback errors don't trigger rollback
+          // Call onPersistSuccess in separate try/catch so  errors don't trigger rollback
           try {
             await onPersistSuccess?.();
           } catch (callbackError) {
@@ -103,7 +104,7 @@ export function usePersistChatMode() {
 
       const existingPromise = activePersistsRef.current.get(chatId);
       const newPromise = (existingPromise ?? Promise.resolve())
-        .catch(() => {}) // Ignore previous failures
+        .catch(() => {})
         .then(() => persistInternal())
         .finally(() => {
           if (activePersistsRef.current.get(chatId) === newPromise) {

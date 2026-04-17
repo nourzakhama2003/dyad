@@ -22,10 +22,6 @@ export function getChatModeLabelKey(
   }
 }
 
-/**
- * Get the i18n key for why local-agent mode is unavailable.
- * Used by both selector and keyboard-toggle to avoid duplication.
- */
 export function getLocalAgentUnavailableReasonKey(
   freeAgentQuotaExceeded: boolean,
 ): "chatMode.agentUnavailableQuota" | "chatMode.agentUnavailableProvider" {
@@ -62,11 +58,7 @@ export function resolveAllowedChatMode({
   return { mode: "build", usedFallback: true };
 }
 
-/**
- * Persist a chat mode change to the database.
- * This helper prevents duplication of the fire-and-forget pattern used in other components like  (ChatModeSelector, useChatModeToggle, etc.)
- * Errors are thrown to allow callers to handle rollback and UI updates.
- */
+//This  prevents duplication of the fire-and-forget pattern used in other components
 export async function persistChatModeToDb(
   chatId: number,
   appId: number,

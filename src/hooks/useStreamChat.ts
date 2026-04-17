@@ -167,9 +167,10 @@ export function useStreamChat({
 
       let hasIncrementedStreamCount = false;
       try {
-        // Get per-chat mode from cache, fall back to global setting
+        // send undefined if chat mode  not found in cache to let backend resolve from DB
         const currentChat = chats.find((c) => c.id === chatId);
-        const chatMode = currentChat?.chatMode ?? settings?.selectedChatMode;
+        const chatMode =
+          currentChat?.chatMode === null ? undefined : currentChat?.chatMode;
 
         ipc.chatStream.start(
           {
@@ -407,6 +408,7 @@ export function useStreamChat({
       refetchUserBudget,
       settings,
       queryClient,
+      chats,
     ],
   );
 

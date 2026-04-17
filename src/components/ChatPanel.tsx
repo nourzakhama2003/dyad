@@ -298,7 +298,7 @@ export function ChatPanel({
                 </div>
               </div>
             )}
-            <ChatInput chatId={chatId} />
+            <ChatInput chatId={chatId} isRestoringMode={isRestoringMode} />
           </div>
         )}
         <VersionPane

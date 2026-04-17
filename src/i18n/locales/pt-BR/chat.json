@@ -143,10 +143,6 @@
     "openMenu": "Abrir menu de modo",
     "toggleShortcut": "{{modeDescription}} ({{shortcut}} para alternar)",
     "noAppSelected": "Nenhum app selecionado — não é possível alterar o modo de chat",
-    "switchToBuildPersistFailed": "Não foi possível salvar o modo Construir para este chat. Você pode tentar novamente.",
-    "switchToBuildPersistFailedFinal": "Não foi possível salvar o modo Build para este chat. Tente novamente mais tarde.",
-    "chatModeLoading": "O modo de chat ainda está carregando. Por favor, tente novamente.",
-    "retry": "Tentar Novamente",
     "restoringChatMode": "Restaurando modo de chat...",
     "restoreModeTimedOut": "Não foi possível restaurar o modo de chat no tempo — usando {{mode}}. Mude manualmente se necessário.",
     "agentV2": "Agente v2",
@@ -183,9 +179,7 @@
     "agentUnavailableProvider": "O modo Agent requer um provedor OpenAI ou Anthropic",
     "modeUnavailableFallback": "Modo {{mode}} indisponível - este chat foi alternado para {{fallbackMode}}",
     "agentFallbackSwitched": "Modo Agent indisponível — alternado para {{mode}}",
-    "persistFailed": "Falha ao salvar o modo de chat no banco de dados",
-    "persistFailedWithMode": "Não foi possível alternar para {{attempted}} — mantendo {{current}}",
-    "planAgentUnavailable": "O modo Agent não está disponível para implementação de plano. Ative um modo elegível e tente novamente."
+    "persistFailed": "Falha ao salvar o modo de chat no banco de dados"
   },
   "modelPicker": {
     "modelLabel": "Modelo:",

@@ -108,7 +108,13 @@ import { isDyadProEnabled } from "@/lib/schemas";
 
 const showTokenBarAtom = atom(false);
 
-export function ChatInput({ chatId }: { chatId?: number }) {
+export function ChatInput({
+  chatId,
+  isRestoringMode,
+}: {
+  chatId?: number;
+  isRestoringMode?: boolean;
+}) {
   const { t } = useTranslation("chat");
   const posthog = usePostHog();
   const [inputValue, setInputValue] = useAtom(chatInputValueAtom);
@@ -985,6 +991,7 @@ export function ChatInput({ chatId }: { chatId?: number }) {
                     <button
                       onClick={handleSubmit}
                       disabled={
+                        isRestoringMode ||
                         (!inputValue.trim() &&
                           attachments.length === 0 &&
                           !hasSuccessfulImageJobs) ||

@@ -143,10 +143,6 @@
     "openMenu": "打开模式菜单",
     "toggleShortcut": "{{modeDescription}} ({{shortcut}} 切换)",
     "noAppSelected": "未选择应用 — 无法改变聊天模式",
-    "switchToBuildPersistFailed": "无法为此聊天保存构建模式。您可以重试。",
-    "switchToBuildPersistFailedFinal": "无法保存此聊天的 Build 模式。请稍后重试。",
-    "chatModeLoading": "聊天模式正在加载中。请重试。",
-    "retry": "重试",
     "restoringChatMode": "正在恢复聊天模式...",
     "restoreModeTimedOut": "无法及时恢复此聊天的模式 - 使用 {{mode}}。如需要可手动切换。",
     "agentV2": "Agent v2",
@@ -181,9 +177,7 @@
     "agentUnavailableProvider": "Agent 模式需要 OpenAI 或 Anthropic 提供商",
     "modeUnavailableFallback": "{{mode}} 模式不可用 - 此聊天已切换到 {{fallbackMode}}",
     "agentFallbackSwitched": "Agent 模式不可用——已切换到 {{mode}}",
-    "persistFailed": "保存聊天模式到数据库失败",
-    "persistFailedWithMode": "无法切换到 {{attempted}} —— 保持为 {{current}}",
-    "planAgentUnavailable": "Agent 模式对计划实施不可用。请启用合格的模式，然后重试。"
+    "persistFailed": "保存聊天模式到数据库失败"
   },
   "modelPicker": {
     "modelLabel": "模型：",
