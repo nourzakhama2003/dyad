@@ -141,7 +141,7 @@
   "deselectComponent": "Deselect component",
   "chatMode": {
     "openMenu": "Open mode menu",
-    "toggleShortcut": "{{shortcut}} to toggle",
+    "toggleShortcut": "{{modeDescription}} ({{shortcut}} to toggle)",
     "noAppSelected": "No app selected — can't change chat mode",
     "switchToBuildPersistFailed": "Could not save Build mode for this chat. You can retry.",
     "switchToBuildPersistFailedFinal": "Could not save Build mode for this chat. Please try again later.",

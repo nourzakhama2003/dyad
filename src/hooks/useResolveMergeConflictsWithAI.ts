@@ -93,11 +93,12 @@ For each file, review the conflict markers (<<<<<<<, =======, >>>>>>>) and choos
 
       // Start the stream
       let hasIncrementedStreamCount = false;
+      // Merge conflict resolution should always use build mode to write files
       ipc.chatStream.start(
         {
           chatId: newChatId,
           prompt,
-          chatMode: settings?.selectedChatMode,
+          chatMode: "build",
         },
         {
           onChunk: ({ messages, streamingMessageId, streamingContent }) => {

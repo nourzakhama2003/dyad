@@ -91,7 +91,11 @@ export function usePersistChatMode() {
             }
           }
 
-          await onPersistError?.(error);
+          try {
+            await onPersistError?.(error);
+          } catch (callbackError) {
+            console.error("onPersistError callback failed:", callbackError);
+          }
           const currentIdFromRoute = getCurrentChatIdRef.current();
           return { success: false, sameRoute: currentIdFromRoute === chatId };
         }

@@ -141,7 +141,7 @@
   "deselectComponent": "取消选择组件",
   "chatMode": {
     "openMenu": "打开模式菜单",
-    "toggleShortcut": "{{shortcut}} 切换",
+    "toggleShortcut": "{{modeDescription}} ({{shortcut}} 切换)",
     "noAppSelected": "未选择应用 — 无法改变聊天模式",
     "switchToBuildPersistFailed": "无法为此聊天保存构建模式。您可以重试。",
     "switchToBuildPersistFailedFinal": "无法保存此聊天的 Build 模式。请稍后重试。",

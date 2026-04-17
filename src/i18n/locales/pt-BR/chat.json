@@ -141,7 +141,7 @@
   "deselectComponent": "Desmarcar componente",
   "chatMode": {
     "openMenu": "Abrir menu de modo",
-    "toggleShortcut": "{{shortcut}} para alternar",
+    "toggleShortcut": "{{modeDescription}} ({{shortcut}} para alternar)",
     "noAppSelected": "Nenhum app selecionado — não é possível alterar o modo de chat",
     "switchToBuildPersistFailed": "Não foi possível salvar o modo Construir para este chat. Você pode tentar novamente.",
     "switchToBuildPersistFailedFinal": "Não foi possível salvar o modo Build para este chat. Tente novamente mais tarde.",

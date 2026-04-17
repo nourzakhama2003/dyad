@@ -54,7 +54,7 @@ export function useStreamChat({
   const setErrorById = useSetAtom(chatErrorByIdAtom);
   const setIsPreviewOpen = useSetAtom(isPreviewOpenAtom);
   const [selectedAppId] = useAtom(selectedAppIdAtom);
-  const { invalidateChats } = useChats(selectedAppId);
+  const { invalidateChats, chats } = useChats(selectedAppId);
   const { refreshApp } = useLoadApp(selectedAppId);
 
   const setStreamCountById = useSetAtom(chatStreamCountByIdAtom);
@@ -167,6 +167,10 @@ export function useStreamChat({
 
       let hasIncrementedStreamCount = false;
       try {
+        // Get per-chat mode from cache, fall back to global setting
+        const currentChat = chats.find((c) => c.id === chatId);
+        const chatMode = currentChat?.chatMode ?? settings?.selectedChatMode;
+
         ipc.chatStream.start(
           {
             chatId,
@@ -174,7 +178,7 @@ export function useStreamChat({
             redo,
             attachments: convertedAttachments,
             selectedComponents: selectedComponents ?? [],
-            chatMode: settings?.selectedChatMode,
+            chatMode,
           },
           {
             onChunk: ({
