@@ -38,6 +38,16 @@ export class ChatActions {
     }).toPass({ timeout: Timeout.SHORT });
   }
 
+  async dismissFloatingOverlays() {
+    const tooltipOverlay = this.page.locator(
+      '[data-slot="tooltip-content"][data-open]',
+    );
+    if (await tooltipOverlay.count()) {
+      await this.page.keyboard.press("Escape");
+      await expect(tooltipOverlay).toHaveCount(0, { timeout: Timeout.SHORT });
+    }
+  }
+
   /**
    * Opens the chat history menu by clearing the input and pressing ArrowUp.
    * Uses toPass() for resilience since the Lexical editor may need time to
@@ -99,25 +109,37 @@ export class ChatActions {
   async selectChatMode(
     mode: "build" | "ask" | "agent" | "local-agent" | "basic-agent" | "plan",
   ) {
-    await this.page.getByTestId("chat-mode-selector").click();
-    const mapping: Record<string, string> = {
-      build: "Build Generate and edit code",
-      ask: "Ask Ask",
-      agent: "Build with MCP",
-      "local-agent": "Agent v2",
-      "basic-agent": "Basic Agent", // For free users
-      plan: "Plan.*Design before you build",
+    await this.dismissFloatingOverlays();
+    const selector = this.page.getByTestId("chat-mode-selector");
+    await expect(selector).toBeVisible({ timeout: Timeout.MEDIUM });
+    await selector.click({ force: true });
+    const mapping: Record<string, RegExp> = {
+      build: /^Build/,
+      ask: /^Ask/,
+      agent: /^Agent/,
+      "local-agent": /^Agent/,
+      "basic-agent": /Basic Agent/,
+      plan: /^Plan/,
     };
     const optionName = mapping[mode];
-    await this.page
-      .getByRole("option", {
-        name: new RegExp(optionName),
-      })
-      .click();
+
+    const option = this.page.getByRole("option", {
+      name: optionName,
+    });
+
+    await expect(option).toBeVisible({ timeout: Timeout.MEDIUM });
+    await option.click({ force: true });
+    // Dismiss any open tooltips after mode selection
+    await this.page.keyboard.press("Escape");
   }
 
   async selectLocalAgentMode() {
     await this.selectChatMode("local-agent");
+  }
+
+  async getChatMode(): Promise<string> {
+    const modeButton = this.page.getByTestId("chat-mode-selector");
+    return (await modeButton.textContent()) || "";
   }
 
   async snapshotChatInputContainer() {

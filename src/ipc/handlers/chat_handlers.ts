@@ -13,7 +13,17 @@ import { chatContracts } from "../types/chat";
 const logger = log.scope("chat_handlers");
 
 export function registerChatHandlers() {
-  createTypedHandler(chatContracts.createChat, async (_, appId) => {
+  createTypedHandler(chatContracts.createChat, async (_, input) => {
+    const appId = typeof input === "number" ? input : input.appId;
+    const initialChatMode =
+      typeof input === "number" ? undefined : input.initialChatMode;
+
+    // initialChatMode may be undefined/null for legacy compatibility.
+    // Clients should resolve the effective mode using useInitialChatMode() before
+    // passing it here, but the handler persists exactly what the client sends.
+    // If no explicit mode is provided, the chat stores null and the UI falls back
+    // to the global/default mode behavior.
+
     // Get the app's path first
     const app = await db.query.apps.findFirst({
       where: eq(apps.id, appId),
@@ -37,12 +47,13 @@ export function registerChatHandlers() {
       // Continue without the git revision
     }
 
-    // Create a new chat
+    // Create a new chat with the initial chat mode (or null if not provided)
     const [chat] = await db
       .insert(chats)
       .values({
         appId,
         initialCommitHash,
+        chatMode: initialChatMode ?? null,
       })
       .returning();
     logger.info(
@@ -52,6 +63,8 @@ export function registerChatHandlers() {
       appId,
       "with initial commit hash:",
       initialCommitHash,
+      "and mode:",
+      initialChatMode,
     );
     return chat.id;
   });
@@ -80,7 +93,10 @@ export function registerChatHandlers() {
     };
   });
 
-  createTypedHandler(chatContracts.getChats, async (_, appId) => {
+  createTypedHandler(chatContracts.getChats, async (_, input) => {
+    // Handle both legacy number input and new object input
+    const appId = typeof input === "number" ? input : input?.appId;
+
     // If appId is provided, filter chats for that app
     const query = appId
       ? db.query.chats.findMany({
@@ -90,6 +106,7 @@ export function registerChatHandlers() {
             title: true,
             createdAt: true,
             appId: true,
+            chatMode: true,
           },
           orderBy: [desc(chats.createdAt)],
         })
@@ -99,6 +116,7 @@ export function registerChatHandlers() {
             title: true,
             createdAt: true,
             appId: true,
+            chatMode: true,
           },
           orderBy: [desc(chats.createdAt)],
         });
@@ -116,6 +134,27 @@ export function registerChatHandlers() {
     await db.update(chats).set({ title }).where(eq(chats.id, chatId));
   });
 
+  createTypedHandler(chatContracts.updateChatMode, async (_, params) => {
+    const { chatId, appId, chatMode } = params;
+    const result = await db
+      .update(chats)
+      .set({ chatMode })
+      .where(and(eq(chats.id, chatId), eq(chats.appId, appId)));
+
+    if (result.changes === 0) {
+      throw new DyadError("Chat not found", DyadErrorKind.NotFound);
+    }
+
+    logger.info(
+      "Updated chat mode for chat:",
+      chatId,
+      "in app:",
+      appId,
+      "to:",
+      chatMode,
+    );
+  });
+
   createTypedHandler(chatContracts.deleteMessages, async (_, chatId) => {
     await db.delete(messages).where(eq(messages.chatId, chatId));
   });
@@ -129,6 +168,7 @@ export function registerChatHandlers() {
         appId: chats.appId,
         title: chats.title,
         createdAt: chats.createdAt,
+        chatMode: chats.chatMode,
       })
       .from(chats)
       .where(and(eq(chats.appId, appId), like(chats.title, `%${query}%`)))
@@ -141,6 +181,7 @@ export function registerChatHandlers() {
       title: c.title,
       createdAt: c.createdAt,
       matchedMessageContent: null,
+      chatMode: c.chatMode,
     }));
 
     // 2) Find messages that match and join to chats to build one result per message
@@ -151,6 +192,7 @@ export function registerChatHandlers() {
         title: chats.title,
         createdAt: chats.createdAt,
         matchedMessageContent: messages.content,
+        chatMode: chats.chatMode,
       })
       .from(messages)
       .innerJoin(chats, eq(messages.chatId, chats.id))

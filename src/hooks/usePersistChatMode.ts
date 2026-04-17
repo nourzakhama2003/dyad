@@ -1,0 +1,111 @@
+import { useCallback, useRef, useMemo } from "react";
+import { useSettings } from "./useSettings";
+import { persistChatModeToDb } from "@/lib/chatModeUtils";
+import type { ChatMode } from "@/lib/schemas";
+import { useInitialChatMode } from "./useInitialChatMode";
+import { useCurrentChatIdFromRoute } from "./useCurrentChatIdFromRoute";
+
+type PersistChatModeOptions = {
+  chatId: number;
+  appId: number;
+  chatMode: ChatMode;
+  optimistic?: boolean;
+  onPersistSuccess?: () => void | Promise<void>;
+  onPersistError?: (error: unknown) => void | Promise<void>;
+};
+
+type PersistChatModeResult = {
+  success: boolean;
+  sameRoute: boolean;
+};
+
+export function usePersistChatMode() {
+  const { updateSettings, settings } = useSettings();
+  const initialChatMode = useInitialChatMode();
+  const getCurrentChatId = useCurrentChatIdFromRoute();
+
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+
+  const updateSettingsRef = useRef(updateSettings);
+  updateSettingsRef.current = updateSettings;
+
+  const initialChatModeRef = useRef(initialChatMode);
+  initialChatModeRef.current = initialChatMode;
+
+  const getCurrentChatIdRef = useRef(getCurrentChatId);
+  getCurrentChatIdRef.current = getCurrentChatId;
+
+  const activePersistsRef = useRef<Map<number, Promise<PersistChatModeResult>>>(
+    new Map(),
+  );
+
+  const persistChatMode = useCallback(
+    async (options: PersistChatModeOptions): Promise<PersistChatModeResult> => {
+      const {
+        chatId,
+        appId,
+        chatMode,
+        optimistic = false,
+        onPersistSuccess,
+        onPersistError,
+      } = options;
+
+      const persistInternal = async (): Promise<PersistChatModeResult> => {
+        // Read refs at execution time, not at enqueue time
+        const currentUpdateSettings = updateSettingsRef.current;
+        const currentIdFromRoute = getCurrentChatIdRef.current();
+
+        // Capture previous mode before optimistic update for correct rollback
+        const previousMode =
+          settingsRef.current?.selectedChatMode ??
+          initialChatModeRef.current ??
+          "build";
+
+        try {
+          if (optimistic) {
+            await currentUpdateSettings({ selectedChatMode: chatMode });
+          }
+          await persistChatModeToDb(chatId, appId, chatMode);
+          if (!optimistic) {
+            await currentUpdateSettings({ selectedChatMode: chatMode });
+          }
+
+          // Call onPersistSuccess in separate try/catch so callback errors don't trigger rollback
+          try {
+            await onPersistSuccess?.();
+          } catch (callbackError) {
+            console.error("onPersistSuccess callback failed:", callbackError);
+          }
+
+          return { success: true, sameRoute: currentIdFromRoute === chatId };
+        } catch (error) {
+          console.error("Failed to persist chat mode:", error);
+
+          if (optimistic) {
+            await currentUpdateSettings({ selectedChatMode: previousMode });
+          }
+
+          await onPersistError?.(error);
+          return { success: false, sameRoute: currentIdFromRoute === chatId };
+        }
+      };
+
+      const existingPromise = activePersistsRef.current.get(chatId);
+      const newPromise = (existingPromise ?? Promise.resolve())
+        .catch(() => {}) // Ignore previous failures
+        .then(() => persistInternal())
+        .finally(() => {
+          if (activePersistsRef.current.get(chatId) === newPromise) {
+            activePersistsRef.current.delete(chatId);
+          }
+        });
+
+      activePersistsRef.current.set(chatId, newPromise);
+      return newPromise;
+    },
+    [],
+  );
+
+  return useMemo(() => ({ persistChatMode }), [persistChatMode]);
+}
