@@ -252,7 +252,7 @@ export function ChatModeSelector() {
             {t("chatMode.toggleShortcut", {
               defaultValue: "{{modeDescription}} ({{shortcut}} to toggle)",
               modeDescription: getModeTooltip(selectedMode),
-              shortcut: isMac ? "⌘" : "Ctrl",
+              shortcut: isMac ? "⌘ + ." : "Ctrl + .",
             })}
           </TooltipContent>
         </Tooltip>

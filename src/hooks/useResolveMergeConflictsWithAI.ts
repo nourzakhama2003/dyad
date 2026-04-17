@@ -186,6 +186,7 @@ For each file, review the conflict markers (<<<<<<<, =======, >>>>>>>) and choos
     navigate,
     invalidateChats,
     refreshApp,
+    settings,
   ]);
 
   return { resolveWithAI, isResolving };

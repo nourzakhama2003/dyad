@@ -46,6 +46,8 @@ export function useRestoreChatMode({
   // Use refs for settings/envVars to avoid effect re-runs on object reference changes
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
+  const envVarsRef = useRef(envVars);
+  envVarsRef.current = envVars;
 
   useEffect(() => {
     if (!chatId || !settingsRef.current) {
@@ -65,9 +67,9 @@ export function useRestoreChatMode({
       if (!isCancelled) setIsRestoringMode(true);
     };
 
-    //  to avoid race conditions
+    // Snapshot values to avoid race conditions
     const snapshottedSettings = { ...settingsRef.current };
-    const snapshottedEnvVars = { ...envVars };
+    const snapshottedEnvVars = { ...envVarsRef.current };
     const snapshottedIsQuotaExceeded = isQuotaExceeded;
 
     const restoreTimeout = window.setTimeout(() => {
