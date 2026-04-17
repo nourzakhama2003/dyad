@@ -54,7 +54,6 @@ export function usePersistChatMode() {
       const persistInternal = async (): Promise<PersistChatModeResult> => {
         // Read refs at execution time, not at enqueue time
         const currentUpdateSettings = updateSettingsRef.current;
-        const currentIdFromRoute = getCurrentChatIdRef.current();
 
         // Capture previous mode before optimistic update for correct rollback
         const previousMode =
@@ -78,15 +77,22 @@ export function usePersistChatMode() {
             console.error("onPersistSuccess callback failed:", callbackError);
           }
 
+          // make sure user still in same chat
+          const currentIdFromRoute = getCurrentChatIdRef.current();
           return { success: true, sameRoute: currentIdFromRoute === chatId };
         } catch (error) {
           console.error("Failed to persist chat mode:", error);
 
           if (optimistic) {
-            await currentUpdateSettings({ selectedChatMode: previousMode });
+            try {
+              await currentUpdateSettings({ selectedChatMode: previousMode });
+            } catch (rollbackError) {
+              console.error("Failed to rollback chat mode:", rollbackError);
+            }
           }
 
           await onPersistError?.(error);
+          const currentIdFromRoute = getCurrentChatIdRef.current();
           return { success: false, sameRoute: currentIdFromRoute === chatId };
         }
       };

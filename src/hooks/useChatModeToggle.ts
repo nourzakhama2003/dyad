@@ -14,10 +14,7 @@ import { useFreeAgentQuota } from "./useFreeAgentQuota";
 import { toast } from "sonner";
 import { usePersistChatMode } from "./usePersistChatMode";
 import { useTranslation } from "react-i18next";
-import {
-  getChatModeLabelKey,
-  getLocalAgentUnavailableReasonKey,
-} from "@/lib/chatModeUtils";
+import { getChatModeLabelKey } from "@/lib/chatModeUtils";
 import { useAtomValue } from "jotai";
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { useCurrentChatIdFromRoute } from "./useCurrentChatIdFromRoute";
@@ -127,7 +124,8 @@ export function useChatModeToggle() {
         plan: t(getChatModeLabelKey("plan"), { defaultValue: "Plan" }),
       };
 
-      const localAgentUnavailableReason =
+      // If user was on local-agent and it became unavailable, show info toast about fallback
+      if (
         currentMode === "local-agent" &&
         currentIndex === -1 &&
         !isChatModeAllowed(
@@ -136,27 +134,13 @@ export function useChatModeToggle() {
           envVars,
           freeAgentQuotaAvailable,
         )
-          ? t(getLocalAgentUnavailableReasonKey(!freeAgentQuotaAvailable), {
-              defaultValue: !freeAgentQuotaAvailable
-                ? "Agent mode unavailable — free quota exceeded"
-                : "Agent mode requires an OpenAI or Anthropic provider",
-            })
-          : null;
-
-      const localAgentMessage = localAgentUnavailableReason
-        ? newMode !== "local-agent"
-          ? t("chatMode.agentFallbackSwitched", {
-              defaultValue: "Agent mode unavailable — switched to {{mode}}",
-              mode: modeLabels[newMode],
-            })
-          : localAgentUnavailableReason
-        : null;
-
-      if (localAgentUnavailableReason && newMode !== "local-agent") {
-        toast.info(localAgentMessage!);
-      } else if (localAgentMessage) {
-        toast.error(localAgentMessage);
-        return;
+      ) {
+        toast.info(
+          t("chatMode.agentFallbackSwitched", {
+            defaultValue: "Agent mode unavailable — switched to {{mode}}",
+            mode: modeLabels[newMode],
+          }),
+        );
       }
 
       const chatId = getCurrentChatId();

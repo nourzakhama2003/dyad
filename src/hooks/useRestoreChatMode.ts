@@ -43,12 +43,16 @@ export function useRestoreChatMode({
   // Use a ref to track the last chat restored to avoid duplicate restores
   const lastRestoredChatIdRef = useRef<number | undefined>(undefined);
 
+  // Use refs for settings/envVars to avoid effect re-runs on object reference changes
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+
   useEffect(() => {
-    if (!chatId || !settings) {
+    if (!chatId || !settingsRef.current) {
       return;
     }
 
-    // If we've already restored this chat, skip.
+    // already restored this chat, skip.
     if (lastRestoredChatIdRef.current === chatId) {
       return;
     }
@@ -61,8 +65,8 @@ export function useRestoreChatMode({
       if (!isCancelled) setIsRestoringMode(true);
     };
 
-    // Snapshot values to avoid race conditions
-    const snapshottedSettings = { ...settings };
+    //  to avoid race conditions
+    const snapshottedSettings = { ...settingsRef.current };
     const snapshottedEnvVars = { ...envVars };
     const snapshottedIsQuotaExceeded = isQuotaExceeded;
 
@@ -177,7 +181,7 @@ export function useRestoreChatMode({
           // Still apply the resolved mode to settings even without DB persistence
           shouldUpdateSelectedChatMode = true;
         } else {
-          const persistResult = await persistChatMode({
+          await persistChatMode({
             chatId,
             appId,
             chatMode: resolvedMode.mode,
@@ -199,14 +203,7 @@ export function useRestoreChatMode({
             setIsRestoringMode(false);
           }
 
-          if (
-            !isCancelled &&
-            !restoreAbortController.signal.aborted &&
-            persistResult.success &&
-            persistResult.sameRoute
-          ) {
-            shouldUpdateSelectedChatMode = true;
-          }
+          // persistChatMode with optimistic=false already updates settings internally
         }
       } else if (!isCancelled && !restoreAbortController.signal.aborted) {
         shouldUpdateSelectedChatMode = true;
@@ -266,13 +263,11 @@ export function useRestoreChatMode({
   }, [
     chatId,
     appId,
-    settings,
     isQuotaExceeded,
     persistChatMode,
     queryClient,
     t,
     updateSettings,
-    // Note: envVars omitted from deps to avoid excessive re-runs; handled by snapshot
   ]);
 
   return { isRestoringMode };

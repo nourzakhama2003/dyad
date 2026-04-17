@@ -54,9 +54,13 @@ export function ChatModeSelector() {
   const messagesById = useAtomValue(chatMessagesByIdAtom);
   const currentChatMessages = chatId ? (messagesById.get(chatId) ?? []) : [];
 
-  const { isQuotaExceeded, messagesRemaining, messagesLimit } =
-    useFreeAgentQuota();
-  const freeAgentQuotaAvailable = !isQuotaExceeded;
+  const {
+    isQuotaExceeded,
+    messagesRemaining,
+    messagesLimit,
+    isLoading: isQuotaLoading,
+  } = useFreeAgentQuota();
+  const freeAgentQuotaAvailable = !isQuotaLoading && !isQuotaExceeded;
 
   const effectiveDefaultMode = settings
     ? getEffectiveDefaultChatMode(settings, envVars, freeAgentQuotaAvailable)
@@ -213,6 +217,7 @@ export function ChatModeSelector() {
                   defaultValue: "Current mode: {{mode}}",
                   mode: getModeDisplayName(selectedMode),
                 })}
+                disabled={isPersisting}
                 className={cn(
                   "cursor-pointer w-fit px-2 py-0 text-xs font-medium border-none shadow-none gap-1 rounded-lg transition-colors",
                   isPersisting && "opacity-70",
@@ -244,8 +249,11 @@ export function ChatModeSelector() {
             </SelectValue>
           </TooltipTrigger>
           <TooltipContent>
-            {getModeTooltip(selectedMode)} ({isMac ? "⌘" : "Ctrl"} + . to
-            toggle)
+            {t("chatMode.toggleShortcut", {
+              defaultValue: "{{modeDescription}} ({{shortcut}} to toggle)",
+              modeDescription: getModeTooltip(selectedMode),
+              shortcut: isMac ? "⌘" : "Ctrl",
+            })}
           </TooltipContent>
         </Tooltip>
         <SelectContent align="start" className="min-w-[150px]">

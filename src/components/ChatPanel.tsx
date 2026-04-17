@@ -157,10 +157,18 @@ export function ChatPanel({
   }, [fetchChatMessages]);
 
   const switchToBuildMode = useCallback(() => {
-    if (!selectedAppId || !chatId) {
+    if (!selectedAppId) {
       toast.error(
         t("chatMode.noAppSelected", {
           defaultValue: "No app selected — can't change chat mode",
+        }),
+      );
+      return;
+    }
+    if (!chatId) {
+      toast.error(
+        t("chatMode.noChatSelected", {
+          defaultValue: "No chat selected — can't change chat mode",
         }),
       );
       return;

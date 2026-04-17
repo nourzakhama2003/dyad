@@ -12,6 +12,7 @@ import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { showError } from "@/lib/toast";
 import { useChats } from "@/hooks/useChats";
 import { useLoadApp } from "@/hooks/useLoadApp";
+import { useSettings } from "./useSettings";
 
 interface UseResolveMergeConflictsWithAIProps {
   appId: number;
@@ -38,6 +39,7 @@ export function useResolveMergeConflictsWithAI({
   const isResolvingRef = useRef(false);
   const { invalidateChats } = useChats(appId);
   const { refreshApp } = useLoadApp(appId);
+  const { settings } = useSettings();
 
   const resolveWithAI = useCallback(async () => {
     if (!appId) {
@@ -95,6 +97,7 @@ For each file, review the conflict markers (<<<<<<<, =======, >>>>>>>) and choos
         {
           chatId: newChatId,
           prompt,
+          chatMode: settings?.selectedChatMode,
         },
         {
           onChunk: ({ messages, streamingMessageId, streamingContent }) => {

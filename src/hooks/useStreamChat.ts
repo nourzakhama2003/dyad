@@ -174,6 +174,7 @@ export function useStreamChat({
             redo,
             attachments: convertedAttachments,
             selectedComponents: selectedComponents ?? [],
+            chatMode: settings?.selectedChatMode,
           },
           {
             onChunk: ({
