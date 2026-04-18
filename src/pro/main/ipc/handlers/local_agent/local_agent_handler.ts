@@ -576,7 +576,11 @@ export async function handleLocalAgentStream(
     const agentTools = buildAgentToolSet(ctx, {
       readOnly,
       planModeOnly,
-      basicAgentMode: !readOnly && !planModeOnly && isLocalAgentMode,
+      basicAgentMode:
+        !readOnly &&
+        !planModeOnly &&
+        isLocalAgentMode &&
+        !isDyadProEnabled(settings),
     });
     const mcpTools =
       readOnly || planModeOnly ? {} : await getMcpTools(event, ctx);

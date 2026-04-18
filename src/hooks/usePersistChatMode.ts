@@ -85,10 +85,14 @@ export function usePersistChatMode() {
           console.error("Failed to persist chat mode:", error);
 
           if (optimistic) {
-            try {
-              await currentUpdateSettings({ selectedChatMode: previousMode });
-            } catch (rollbackError) {
-              console.error("Failed to rollback chat mode:", rollbackError);
+            // Only rollback if user is still on the same chat
+            const currentIdFromRoute = getCurrentChatIdRef.current();
+            if (currentIdFromRoute === chatId) {
+              try {
+                await currentUpdateSettings({ selectedChatMode: previousMode });
+              } catch (rollbackError) {
+                console.error("Failed to rollback chat mode:", rollbackError);
+              }
             }
           }
 

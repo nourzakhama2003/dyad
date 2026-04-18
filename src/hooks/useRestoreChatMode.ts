@@ -254,6 +254,8 @@ export function useRestoreChatMode({
           return;
         }
 
+        setIsRestoringMode(true);
+
         if (isCancelled) return;
         bannerTimeoutId = window.setTimeout(setBannerVisible, 200);
 
