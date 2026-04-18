@@ -153,15 +153,6 @@ export function useChatModeToggle() {
         );
       }, 400);
 
-      if (chatId && !selectedAppId) {
-        toast.error(
-          t("chatMode.noAppSelected", {
-            defaultValue: "No app selected — can't change chat mode",
-          }),
-        );
-        return;
-      }
-
       if (chatId && selectedAppId) {
         const result = await persistChatMode({
           chatId,

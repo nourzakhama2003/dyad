@@ -7,7 +7,6 @@ import {
   chatErrorByIdAtom,
 } from "@/atoms/chatAtoms";
 import { ipc } from "@/ipc/types";
-import { useSettings } from "@/hooks/useSettings";
 
 /**
  * Hook to handle starting plan implementation when a plan is accepted.
@@ -21,7 +20,6 @@ export function usePlanImplementation() {
   const setIsStreamingById = useSetAtom(isStreamingByIdAtom);
   const setMessagesById = useSetAtom(chatMessagesByIdAtom);
   const setErrorById = useSetAtom(chatErrorByIdAtom);
-  const { settings } = useSettings();
 
   // Track if we've already triggered implementation for this pending plan
   const hasTriggeredRef = useRef(false);
@@ -98,7 +96,7 @@ export function usePlanImplementation() {
             chatId,
             prompt,
             selectedComponents: [],
-            chatMode: settings?.selectedChatMode ?? "build",
+            chatMode: "build",
           },
           {
             onChunk: ({

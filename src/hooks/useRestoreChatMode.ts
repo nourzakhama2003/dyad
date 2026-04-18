@@ -184,7 +184,7 @@ export function useRestoreChatMode({
             setIsRestoringMode(false);
           }
         } else {
-          await persistChatMode({
+          const persistResult = await persistChatMode({
             chatId,
             appId,
             chatMode: resolvedMode.mode,
@@ -201,6 +201,11 @@ export function useRestoreChatMode({
               );
             },
           });
+
+          // Even if persist fails, update in-memory to avoid staying on disallowed mode
+          if (!persistResult.success) {
+            shouldUpdateSelectedChatMode = true;
+          }
 
           if (!isCancelled) {
             setIsRestoringMode(false);
@@ -266,6 +271,7 @@ export function useRestoreChatMode({
       isCancelled = true;
       restoreAbortController.abort();
       clearRestoreTimeout();
+      setIsRestoringMode(false);
     };
   }, [
     chatId,
