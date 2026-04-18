@@ -18,7 +18,7 @@ import { db } from "@/db";
 import { chats, messages } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-import { isDyadProEnabled, isBasicAgentMode } from "@/lib/schemas";
+import { isDyadProEnabled } from "@/lib/schemas";
 import { readSettings } from "@/main/settings";
 import { getDyadAppPath } from "@/paths/paths";
 import { getModelClient } from "@/ipc/utils/get_model_client";
@@ -314,23 +314,6 @@ export async function handleLocalAgentStream(
     await updateResponseInDb(placeholderMessageId, fullResponse);
   };
 
-  // Check Pro status or Basic Agent mode
-  // Basic Agent mode allows non-Pro users with quota (quota check is done in chat_stream_handlers)
-  // Read-only mode (ask mode) is allowed for all users without Pro
-  if (
-    !readOnly &&
-    !planModeOnly &&
-    !isDyadProEnabled(settings) &&
-    !isBasicAgentMode(settings)
-  ) {
-    safeSend(event.sender, "chat:response:error", {
-      chatId: req.chatId,
-      error:
-        "Agent v2 requires Dyad Pro. Please enable Dyad Pro in Settings → Pro.",
-    });
-    return false;
-  }
-
   const loadChat = async () =>
     db.query.chats.findFirst({
       where: eq(chats.id, req.chatId),
@@ -350,6 +333,29 @@ export async function handleLocalAgentStream(
       `Chat not found: ${req.chatId}`,
       DyadErrorKind.NotFound,
     );
+  }
+
+  // Check Pro status or Basic Agent mode using per-chat mode (not global setting)
+  // Basic Agent mode allows non-Pro users with quota (quota check is done in chat_stream_handlers)
+  // Read-only mode (ask mode) is allowed for all users without Pro
+  const effectiveChatMode =
+    req.chatMode ??
+    initialChat.chatMode ??
+    settings.selectedChatMode ??
+    "build";
+  const isLocalAgentMode = effectiveChatMode === "local-agent";
+  if (
+    !readOnly &&
+    !planModeOnly &&
+    !isDyadProEnabled(settings) &&
+    !isLocalAgentMode
+  ) {
+    safeSend(event.sender, "chat:response:error", {
+      chatId: req.chatId,
+      error:
+        "Agent v2 requires Dyad Pro. Please enable Dyad Pro in Settings → Pro.",
+    });
+    return false;
   }
 
   let chat = initialChat;
@@ -570,7 +576,7 @@ export async function handleLocalAgentStream(
     const agentTools = buildAgentToolSet(ctx, {
       readOnly,
       planModeOnly,
-      basicAgentMode: !readOnly && !planModeOnly && isBasicAgentMode(settings),
+      basicAgentMode: !readOnly && !planModeOnly && isLocalAgentMode,
     });
     const mcpTools =
       readOnly || planModeOnly ? {} : await getMcpTools(event, ctx);

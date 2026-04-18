@@ -7,6 +7,8 @@ import { queryKeys } from "@/lib/queryKeys";
 import {
   isChatModeAllowed,
   isDyadProEnabled,
+  getEffectiveDefaultChatMode,
+  type ChatMode,
   type ChatSummary,
   type UserSettings,
 } from "@/lib/schemas";
@@ -113,17 +115,22 @@ export function useRestoreChatMode({
         return;
       }
 
-      if (
-        candidateMode === null ||
-        candidateMode === undefined ||
-        !snapshottedSettings
-      ) {
+      if (!snapshottedSettings) {
         if (!isCancelled) {
           clearRestoreTimeout();
           setIsRestoringMode(false);
         }
         return;
       }
+
+      // For null/undefined candidateMode (new chats), fall back to effective default
+      const effectiveCandidateMode: ChatMode =
+        candidateMode ??
+        getEffectiveDefaultChatMode(
+          snapshottedSettings,
+          snapshottedEnvVars,
+          !snapshottedIsQuotaExceeded,
+        );
 
       let fallbackMode = snapshottedSettings.selectedChatMode ?? "build";
       if (
@@ -138,7 +145,7 @@ export function useRestoreChatMode({
       }
 
       const resolvedMode = resolveAllowedChatMode({
-        desiredMode: candidateMode,
+        desiredMode: effectiveCandidateMode,
         fallbackMode,
         settings: snapshottedSettings,
         envVars: snapshottedEnvVars,
@@ -159,7 +166,7 @@ export function useRestoreChatMode({
             defaultValue:
               "{{mode}} mode unavailable — switched this chat to {{fallbackMode}}",
             mode: t(
-              getChatModeLabelKey(candidateMode, {
+              getChatModeLabelKey(effectiveCandidateMode, {
                 isProEnabled: isDyadProEnabled(snapshottedSettings),
               }),
               { defaultValue: "Build" },
@@ -237,6 +244,8 @@ export function useRestoreChatMode({
         const cachedChat = cachedChats?.find((c) => c.id === chatId);
 
         if (cachedChat) {
+          // Protect send button during mode restore for cached chats too
+          setIsRestoringMode(true);
           await applyResolvedMode(cachedChat.chatMode ?? null);
 
           lastRestoredChatIdRef.current = chatId;
@@ -278,6 +287,7 @@ export function useRestoreChatMode({
   }, [
     chatId,
     appId,
+    settings,
     isQuotaExceeded,
     persistChatMode,
     queryClient,

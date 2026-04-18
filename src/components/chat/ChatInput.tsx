@@ -1001,7 +1001,7 @@ export function ChatInput({
                       }
                       aria-label={
                         isRestoringMode
-                          ? t("chatMode.restoringMode", {
+                          ? t("chatMode.restoringChatMode", {
                               defaultValue: "Restoring chat mode...",
                             })
                           : t("sendMessage")
@@ -1014,7 +1014,7 @@ export function ChatInput({
                 </TooltipTrigger>
                 <TooltipContent>
                   {isRestoringMode
-                    ? t("chatMode.restoringMode", {
+                    ? t("chatMode.restoringChatMode", {
                         defaultValue: "Restoring chat mode...",
                       })
                     : t("sendMessage")}
