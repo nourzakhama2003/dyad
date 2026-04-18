@@ -194,12 +194,7 @@ export const chatContracts = {
 
   getChats: defineContract({
     channel: "get-chats",
-    input: z.union([
-      z.number().optional(), // Backward compatible: appId as number
-      z.object({
-        appId: z.number().optional(),
-      }),
-    ]),
+    input: z.number().optional(),
     output: z.array(ChatSummarySchema),
   }),
 

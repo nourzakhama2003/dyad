@@ -335,9 +335,10 @@ export async function handleLocalAgentStream(
     );
   }
 
-  // Check Pro status or Basic Agent mode using per-chat mode (not global setting)
-  // Basic Agent mode allows non-Pro users with quota (quota check is done in chat_stream_handlers)
-  // Read-only mode (ask mode) is allowed for all users without Pro
+  // Check Pro status using per-chat mode (not global setting)
+  // Note: This guard is defense-in-depth. Callers in chat_stream_handlers.ts already
+  // gate on effectiveStreamMode === "local-agent", but this check protects against
+  // future direct callers that might not validate mode before calling.
   const effectiveChatMode =
     req.chatMode ??
     initialChat.chatMode ??

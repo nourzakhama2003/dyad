@@ -37,6 +37,8 @@ test("chat mode persists when switching between chats", async ({ po }) => {
 
   for (let i = 0; i < inactiveCount; i++) {
     await inactiveTabs.nth(i).locator("button").first().click();
+    // Wait for mode restore to complete
+    await po.page.waitForTimeout(500);
     const currentMode = await po.chatActions.getChatMode();
     if (currentMode.includes("Ask")) {
       foundAskTab = true;

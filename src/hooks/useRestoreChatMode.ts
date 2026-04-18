@@ -99,7 +99,7 @@ export function useRestoreChatMode({
         );
         setIsRestoringMode(false);
       }
-    }, 5000);
+    }, 2000);
 
     const clearRestoreTimeout = () => {
       window.clearTimeout(restoreTimeout);
@@ -152,14 +152,8 @@ export function useRestoreChatMode({
         freeAgentQuotaAvailable: !snapshottedIsQuotaExceeded,
       });
 
-      if (!isCancelled) {
-        clearRestoreTimeout();
-        if (!resolvedMode.usedFallback) {
-          setIsRestoringMode(false);
-        }
-      }
+      clearRestoreTimeout();
 
-      let shouldUpdateSelectedChatMode = false;
       if (resolvedMode.usedFallback) {
         toast.info(
           t("chatMode.modeUnavailableFallback", {
@@ -178,18 +172,16 @@ export function useRestoreChatMode({
               { defaultValue: "Build" },
             ),
           }),
-          { id: `restore-fallback-${chatId}` },
+          { id: "restore-fallback-quota" },
         );
-
+        if (!isCancelled) {
+          setIsRestoringMode(false);
+        }
+      } else {
         if (!appId) {
           console.warn(
             `Skipping chat mode persist for chat ${chatId}: appId not available`,
           );
-
-          shouldUpdateSelectedChatMode = true;
-          if (!isCancelled) {
-            setIsRestoringMode(false);
-          }
         } else {
           const persistResult = await persistChatMode({
             chatId,
@@ -209,30 +201,28 @@ export function useRestoreChatMode({
             },
           });
 
-          // Even if persist fails, update in-memory to avoid staying on disallowed mode
           if (!persistResult.success) {
-            shouldUpdateSelectedChatMode = true;
-          }
-
-          if (!isCancelled) {
-            setIsRestoringMode(false);
+            console.warn(
+              `Chat mode persist failed for chat ${chatId}, continuing with in-memory update`,
+            );
           }
         }
-      } else if (!isCancelled && !restoreAbortController.signal.aborted) {
-        shouldUpdateSelectedChatMode = true;
-      }
 
-      if (
-        shouldUpdateSelectedChatMode &&
-        !isCancelled &&
-        !restoreAbortController.signal.aborted &&
-        snapshottedSettings.selectedChatMode !== resolvedMode.mode
-      ) {
-        await updateSettings({ selectedChatMode: resolvedMode.mode }).catch(
-          (error) => {
-            console.error("Failed to restore selected chat mode:", error);
-          },
-        );
+        if (
+          !isCancelled &&
+          !restoreAbortController.signal.aborted &&
+          snapshottedSettings.selectedChatMode !== resolvedMode.mode
+        ) {
+          await updateSettings({ selectedChatMode: resolvedMode.mode }).catch(
+            (error) => {
+              console.error("Failed to restore selected chat mode:", error);
+            },
+          );
+        }
+
+        if (!isCancelled) {
+          setIsRestoringMode(false);
+        }
       }
     };
 
@@ -244,17 +234,13 @@ export function useRestoreChatMode({
         const cachedChat = cachedChats?.find((c) => c.id === chatId);
 
         if (cachedChat) {
-          // Protect send button during mode restore for cached chats too
           setIsRestoringMode(true);
           await applyResolvedMode(cachedChat.chatMode ?? null);
-
           lastRestoredChatIdRef.current = chatId;
           lastRestoredQuotaExceededRef.current = isQuotaExceeded;
           lastRestoredAppIdRef.current = appId ?? null;
           return;
         }
-
-        setIsRestoringMode(true);
 
         if (isCancelled) return;
         bannerTimeoutId = window.setTimeout(setBannerVisible, 200);
@@ -289,7 +275,6 @@ export function useRestoreChatMode({
   }, [
     chatId,
     appId,
-    settings,
     isQuotaExceeded,
     persistChatMode,
     queryClient,

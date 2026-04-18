@@ -284,21 +284,23 @@ export function ChatPanel({
               <FreeAgentQuotaBanner onSwitchToBuildMode={switchToBuildMode} />
             )}
             <NotificationBanner />
-            {isRestoringMode && (
-              <div className="w-full flex justify-center pointer-events-none">
-                <div
-                  role="status"
-                  aria-live="polite"
-                  className="w-fit mt-2 px-3 py-1.5 text-xs bg-background/80 backdrop-blur-sm border border-border shadow-sm rounded-full text-muted-foreground flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200"
-                >
-                  <Loader size={12} className="animate-spin" />
-                  {t("chatMode.restoringChatMode", {
-                    defaultValue: "Restoring chat mode...",
-                  })}
+            <div className="relative">
+              {isRestoringMode && (
+                <div className="absolute -top-3 left-0 right-0 flex justify-center pointer-events-none z-10">
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="w-fit px-3 py-1.5 text-xs bg-background/80 backdrop-blur-sm border border-border shadow-sm rounded-full text-muted-foreground flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200"
+                  >
+                    <Loader size={12} className="animate-spin" />
+                    {t("chatMode.restoringChatMode", {
+                      defaultValue: "Restoring chat mode...",
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
-            <ChatInput chatId={chatId} isRestoringMode={isRestoringMode} />
+              )}
+              <ChatInput chatId={chatId} isRestoringMode={isRestoringMode} />
+            </div>
           </div>
         )}
         <VersionPane

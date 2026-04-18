@@ -235,8 +235,11 @@ export function ChatModeSelector() {
           >
             <SelectValue>
               <span className="flex items-center gap-1.5" aria-hidden="true">
-                {getIconForMode(selectedMode)}
-                {isPersisting && <Loader2 size={12} className="animate-spin" />}
+                {isPersisting ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  getIconForMode(selectedMode)
+                )}
                 {getModeDisplayName(selectedMode)}
               </span>
               {isPersisting && (

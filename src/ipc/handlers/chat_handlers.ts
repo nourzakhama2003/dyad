@@ -84,10 +84,7 @@ export function registerChatHandlers() {
     };
   });
 
-  createTypedHandler(chatContracts.getChats, async (_, input) => {
-    // Handle both legacy number input and new object input
-    const appId = typeof input === "number" ? input : input?.appId;
-
+  createTypedHandler(chatContracts.getChats, async (_, appId) => {
     // If appId is provided, filter chats for that app
     const query = appId
       ? db.query.chats.findMany({
