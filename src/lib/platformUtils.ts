@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type NavigatorWithUserAgentData = Navigator & {
   userAgentData?: {
@@ -16,11 +16,7 @@ export function detectIsMac(): boolean {
 }
 
 export function useIsMac(): boolean {
-  const [isMac, setIsMac] = useState(false);
-
-  useEffect(() => {
-    setIsMac(detectIsMac());
-  }, []);
+  const [isMac] = useState(() => detectIsMac());
 
   return isMac;
 }

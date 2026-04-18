@@ -54,7 +54,7 @@ export function useStreamChat({
   const setErrorById = useSetAtom(chatErrorByIdAtom);
   const setIsPreviewOpen = useSetAtom(isPreviewOpenAtom);
   const [selectedAppId] = useAtom(selectedAppIdAtom);
-  const { invalidateChats, chats } = useChats(selectedAppId);
+  const { invalidateChats } = useChats(selectedAppId);
   const { refreshApp } = useLoadApp(selectedAppId);
 
   const setStreamCountById = useSetAtom(chatStreamCountByIdAtom);
@@ -406,7 +406,6 @@ export function useStreamChat({
       refetchUserBudget,
       settings,
       queryClient,
-      chats,
     ],
   );
 

@@ -205,15 +205,7 @@ export const chatContracts = {
 
   createChat: defineContract({
     channel: "create-chat",
-    input: z.union([
-      z.number(), // Backward compatible: appId as number
-      z.object({
-        appId: z.number(),
-        // Initial chat mode to persist for this new chat
-        // Falls back to global default if not specified
-        initialChatMode: ChatModeSchema.optional(),
-      }),
-    ]),
+    input: z.number(), // appId
     output: CreateChatResultSchema,
   }),
 

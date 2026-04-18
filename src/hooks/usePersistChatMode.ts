@@ -67,9 +67,6 @@ export function usePersistChatMode() {
             await currentUpdateSettings({ selectedChatMode: chatMode });
           }
           await persistChatModeToDb(chatId, appId, chatMode);
-          if (!optimistic) {
-            await currentUpdateSettings({ selectedChatMode: chatMode });
-          }
 
           // Call onPersistSuccess in separate try/catch so  errors don't trigger rollback
           try {
@@ -78,8 +75,11 @@ export function usePersistChatMode() {
             console.error("onPersistSuccess callback failed:", callbackError);
           }
 
-          // make sure user still in same chat
+          // make sure user still in same chat before updating settings
           const currentIdFromRoute = getCurrentChatIdRef.current();
+          if (!optimistic && currentIdFromRoute === chatId) {
+            await currentUpdateSettings({ selectedChatMode: chatMode });
+          }
           return { success: true, sameRoute: currentIdFromRoute === chatId };
         } catch (error) {
           console.error("Failed to persist chat mode:", error);

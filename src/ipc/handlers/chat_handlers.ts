@@ -13,16 +13,9 @@ import { chatContracts } from "../types/chat";
 const logger = log.scope("chat_handlers");
 
 export function registerChatHandlers() {
-  createTypedHandler(chatContracts.createChat, async (_, input) => {
-    const appId = typeof input === "number" ? input : input.appId;
-    const initialChatMode =
-      typeof input === "number" ? undefined : input.initialChatMode;
-
-    // initialChatMode may be undefined/null for legacy compatibility.
-    // Clients should resolve the effective mode using useInitialChatMode() before
-    // passing it here, but the handler persists exactly what the client sends.
-    // If no explicit mode is provided, the chat stores null and the UI falls back
-    // to the global/default mode behavior.
+  createTypedHandler(chatContracts.createChat, async (_, appId) => {
+    // The chat stores null for chatMode initially, and the UI falls back
+    // to the global/default mode behavior via useInitialChatMode().
 
     // Get the app's path first
     const app = await db.query.apps.findFirst({
@@ -47,13 +40,13 @@ export function registerChatHandlers() {
       // Continue without the git revision
     }
 
-    // Create a new chat with the initial chat mode (or null if not provided)
+    // Create a new chat with null chatMode (will be set by UI on first message)
     const [chat] = await db
       .insert(chats)
       .values({
         appId,
         initialCommitHash,
-        chatMode: initialChatMode ?? null,
+        chatMode: null,
       })
       .returning();
     logger.info(
@@ -63,8 +56,6 @@ export function registerChatHandlers() {
       appId,
       "with initial commit hash:",
       initialCommitHash,
-      "and mode:",
-      initialChatMode,
     );
     return chat.id;
   });

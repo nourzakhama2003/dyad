@@ -999,14 +999,26 @@ export function ChatInput({
                           !hasSuccessfulImageJobs) ||
                         disableSendButton
                       }
-                      aria-label={t("sendMessage")}
+                      aria-label={
+                        isRestoringMode
+                          ? t("chatMode.restoringMode", {
+                              defaultValue: "Restoring chat mode...",
+                            })
+                          : t("sendMessage")
+                      }
                       className="px-2 py-2 mb-0.5 mr-1 text-muted-foreground hover:text-primary rounded-lg transition-colors duration-150 disabled:opacity-30 disabled:hover:text-muted-foreground cursor-pointer disabled:cursor-default"
                     />
                   }
                 >
                   <SendHorizontalIcon size={20} />
                 </TooltipTrigger>
-                <TooltipContent>{t("sendMessage")}</TooltipContent>
+                <TooltipContent>
+                  {isRestoringMode
+                    ? t("chatMode.restoringMode", {
+                        defaultValue: "Restoring chat mode...",
+                      })
+                    : t("sendMessage")}
+                </TooltipContent>
               </Tooltip>
             )}
           </div>

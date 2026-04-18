@@ -43,6 +43,7 @@ export function useRestoreChatMode({
   const [isRestoringMode, setIsRestoringMode] = useState(false);
   const lastRestoredChatIdRef = useRef<number | undefined>(undefined);
   const lastRestoredQuotaExceededRef = useRef<boolean>(false);
+  const lastRestoredAppIdRef = useRef<number | null>(null);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
   const envVarsRef = useRef(envVars);
@@ -54,7 +55,8 @@ export function useRestoreChatMode({
     }
     if (
       lastRestoredChatIdRef.current === chatId &&
-      lastRestoredQuotaExceededRef.current === isQuotaExceeded
+      lastRestoredQuotaExceededRef.current === isQuotaExceeded &&
+      lastRestoredAppIdRef.current === appId
     ) {
       return;
     }
@@ -239,6 +241,7 @@ export function useRestoreChatMode({
 
           lastRestoredChatIdRef.current = chatId;
           lastRestoredQuotaExceededRef.current = isQuotaExceeded;
+          lastRestoredAppIdRef.current = appId ?? null;
           return;
         }
 
@@ -254,6 +257,7 @@ export function useRestoreChatMode({
 
         lastRestoredChatIdRef.current = chatId;
         lastRestoredQuotaExceededRef.current = isQuotaExceeded;
+        lastRestoredAppIdRef.current = appId ?? null;
       } catch (err) {
         console.error("Failed to restore chat mode on deep-link:", err);
         if (!isCancelled) {
