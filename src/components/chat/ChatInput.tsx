@@ -237,12 +237,13 @@ export function ChatInput({
 
   const lastMessage = (chatId ? (messagesById.get(chatId) ?? []) : []).at(-1);
   const disableSendButton =
-    settings?.selectedChatMode !== "local-agent" &&
-    lastMessage?.role === "assistant" &&
-    !lastMessage.approvalState &&
-    !!proposal &&
-    proposal.type === "code-proposal" &&
-    messageId === lastMessage.id;
+    isRestoringMode ||
+    (settings?.selectedChatMode !== "local-agent" &&
+      lastMessage?.role === "assistant" &&
+      !lastMessage.approvalState &&
+      !!proposal &&
+      proposal.type === "code-proposal" &&
+      messageId === lastMessage.id);
 
   // Extract user message history for terminal-style navigation
   const userMessageHistory = useMemo(() => {
@@ -453,6 +454,7 @@ export function ChatInput({
 
   const handleSubmit = async () => {
     if (
+      isRestoringMode ||
       (!inputValue.trim() &&
         attachments.length === 0 &&
         !hasSuccessfulImageJobs) ||

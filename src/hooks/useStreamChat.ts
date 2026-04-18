@@ -167,10 +167,8 @@ export function useStreamChat({
 
       let hasIncrementedStreamCount = false;
       try {
-        // send undefined if chat mode  not found in cache to let backend resolve from DB
-        const currentChat = chats.find((c) => c.id === chatId);
-        const chatMode =
-          currentChat?.chatMode === null ? undefined : currentChat?.chatMode;
+        // Use settings.selectedChatMode instead of cache to ensure fresh mode is sent
+        const chatMode = settings?.selectedChatMode ?? undefined;
 
         ipc.chatStream.start(
           {

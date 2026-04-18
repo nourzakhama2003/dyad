@@ -100,7 +100,13 @@ export class ChatActions {
   ) {
     await this.getChatInput().click();
     await this.getChatInput().fill(prompt);
-    await this.page.getByRole("button", { name: "Send message" }).click();
+    const sendButton = this.page.getByRole("button", { name: "Send message" });
+    // Wait for button to be enabled (it may be disabled during mode restore)
+    await expect(async () => {
+      const isEnabled = await sendButton.isEnabled();
+      expect(isEnabled).toBe(true);
+    }).toPass({ timeout: Timeout.MEDIUM });
+    await sendButton.click();
     if (!skipWaitForCompletion) {
       await this.waitForChatCompletion({ timeout });
     }

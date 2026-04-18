@@ -18,6 +18,7 @@ import { getChatModeLabelKey } from "@/lib/chatModeUtils";
 import { useAtomValue } from "jotai";
 import { selectedAppIdAtom } from "@/atoms/appAtoms";
 import { useCurrentChatIdFromRoute } from "./useCurrentChatIdFromRoute";
+import { useIsMac } from "@/lib/platformUtils";
 
 export function useChatModeToggle() {
   const { t } = useTranslation("chat");
@@ -40,27 +41,33 @@ export function useChatModeToggle() {
 
   const toggleInFlightRef = useRef(false);
 
-  // Single ref holding all values needed inside the stable toggle callback
-  const latest = {
-    settings,
-    envVars,
-    isQuotaLoading,
-    isQuotaExceeded,
-    selectedAppId,
-    updateSettings,
-    getCurrentChatId,
-    queryClient,
-    persistChatMode,
-    posthog,
-    t,
-  };
-  const latestRef = useRef(latest);
-  latestRef.current = latest;
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+  const envVarsRef = useRef(envVars);
+  envVarsRef.current = envVars;
+  const isQuotaLoadingRef = useRef(isQuotaLoading);
+  isQuotaLoadingRef.current = isQuotaLoading;
+  const isQuotaExceededRef = useRef(isQuotaExceeded);
+  isQuotaExceededRef.current = isQuotaExceeded;
+  const selectedAppIdRef = useRef(selectedAppId);
+  selectedAppIdRef.current = selectedAppId;
+  const updateSettingsRef = useRef(updateSettings);
+  updateSettingsRef.current = updateSettings;
+  const getCurrentChatIdRef = useRef(getCurrentChatId);
+  getCurrentChatIdRef.current = getCurrentChatId;
+  const queryClientRef = useRef(queryClient);
+  queryClientRef.current = queryClient;
+  const persistChatModeRef = useRef(persistChatMode);
+  persistChatModeRef.current = persistChatMode;
+  const posthogRef = useRef(posthog);
+  posthogRef.current = posthog;
+  const tRef = useRef(t);
+  tRef.current = t;
 
   const toggleChatMode = useCallback(async () => {
     if (toggleInFlightRef.current) {
       toast.info(
-        latestRef.current.t("chatMode.switchInProgress", {
+        tRef.current("chatMode.switchInProgress", {
           defaultValue: "Mode switch already in progress",
         }),
       );
@@ -72,19 +79,17 @@ export function useChatModeToggle() {
     let loadingToastId: string | number | undefined;
     let loadingToastTimerId: number | undefined;
     try {
-      const {
-        settings,
-        envVars,
-        isQuotaLoading,
-        isQuotaExceeded,
-        selectedAppId,
-        updateSettings,
-        getCurrentChatId,
-        queryClient,
-        persistChatMode,
-        posthog,
-        t,
-      } = latestRef.current;
+      const settings = settingsRef.current;
+      const envVars = envVarsRef.current;
+      const isQuotaLoading = isQuotaLoadingRef.current;
+      const isQuotaExceeded = isQuotaExceededRef.current;
+      const selectedAppId = selectedAppIdRef.current;
+      const updateSettings = updateSettingsRef.current;
+      const getCurrentChatId = getCurrentChatIdRef.current;
+      const queryClient = queryClientRef.current;
+      const persistChatMode = persistChatModeRef.current;
+      const posthog = posthogRef.current;
+      const t = tRef.current;
 
       if (!settings) return;
       const currentMode =
@@ -204,23 +209,4 @@ export function useChatModeToggle() {
   );
 
   return { toggleChatMode, isMac };
-}
-
-type NavigatorWithUserAgentData = Navigator & {
-  userAgentData?: {
-    platform?: string;
-  };
-};
-
-export function detectIsMac(): boolean {
-  const nav = navigator as NavigatorWithUserAgentData;
-  if ("userAgentData" in nav && nav.userAgentData?.platform) {
-    return nav.userAgentData.platform.toLowerCase().includes("mac");
-  }
-
-  return /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
-}
-
-export function useIsMac(): boolean {
-  return useMemo(() => detectIsMac(), []);
 }

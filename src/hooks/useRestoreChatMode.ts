@@ -95,7 +95,7 @@ export function useRestoreChatMode({
         );
         setIsRestoringMode(false);
       }
-    }, 3000);
+    }, 5000);
 
     const clearRestoreTimeout = () => {
       window.clearTimeout(restoreTimeout);
@@ -117,7 +117,6 @@ export function useRestoreChatMode({
         !snapshottedSettings
       ) {
         if (!isCancelled) {
-          lastRestoredChatIdRef.current = chatId;
           clearRestoreTimeout();
           setIsRestoringMode(false);
         }
@@ -146,7 +145,6 @@ export function useRestoreChatMode({
 
       if (!isCancelled) {
         clearRestoreTimeout();
-        lastRestoredChatIdRef.current = chatId;
         if (!resolvedMode.usedFallback) {
           setIsRestoringMode(false);
         }

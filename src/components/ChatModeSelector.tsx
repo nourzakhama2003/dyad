@@ -34,7 +34,7 @@ import { Hammer, Bot, MessageCircle, Lightbulb, Loader2 } from "lucide-react";
 import { useChats } from "@/hooks/useChats";
 import { usePersistChatMode } from "@/hooks/usePersistChatMode";
 import { useCurrentChatIdFromRoute } from "@/hooks/useCurrentChatIdFromRoute";
-import { useIsMac } from "@/hooks/useChatModeToggle";
+import { useIsMac } from "@/lib/platformUtils";
 import { useRouterState } from "@tanstack/react-router";
 import { chatMessagesByIdAtom } from "@/atoms/chatAtoms";
 
@@ -235,8 +235,8 @@ export function ChatModeSelector() {
           >
             <SelectValue>
               <span className="flex items-center gap-1.5" aria-hidden="true">
+                {getIconForMode(selectedMode)}
                 {isPersisting && <Loader2 size={12} className="animate-spin" />}
-                {!isPersisting && getIconForMode(selectedMode)}
                 {getModeDisplayName(selectedMode)}
               </span>
               {isPersisting && (
