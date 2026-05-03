@@ -129,6 +129,12 @@ export const systemContracts = {
     output: z.void(),
   }),
 
+  focusWindow: defineContract({
+    channel: "window:focus",
+    input: z.void(),
+    output: z.void(),
+  }),
+
   // Platform info
   getSystemPlatform: defineContract({
     channel: "get-system-platform",
